@@ -181,7 +181,7 @@ def kill_streamlits():
 
 def kill_app_servers():
     """Kill any active app servers spawned by this script."""
-    kill_with_pgrep("running-streamlit-e2e-test")
+    kill_with_pgrep("vite")  # App server for the frontend is vite
 
 
 def run_test(
@@ -316,7 +316,7 @@ def run_app_server():
         "GENERATE_SOURCEMAP": "false",
         "INLINE_RUNTIME_CHUNK": "false",
     }
-    command = ["yarn", "start", "--running-streamlit-e2e-test"]
+    command = ["yarn", "start", "--host"]  # Vite Server needs Host c
     proc = AsyncSubprocess(command, cwd=FRONTEND_DIR, env=env)
 
     print("Starting React app server...")

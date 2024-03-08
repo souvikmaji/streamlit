@@ -16,7 +16,7 @@
 
 import styled from "@emotion/styled"
 
-export const StyledAppViewContainer = styled.div(() => ({
+export const StyledAppViewContainer = styled.div({
   display: "flex",
   flexDirection: "row",
   justifyContent: "flex-start",
@@ -33,7 +33,7 @@ export const StyledAppViewContainer = styled.div(() => ({
     // print multiple pages if app is scrollable in Safari
     overflow: "visible",
   },
-}))
+})
 
 export interface StyledAppViewMainProps {
   isEmbedded: boolean
@@ -71,7 +71,7 @@ export const StyledAppViewMain = styled.section<StyledAppViewMainProps>(
   })
 )
 
-export const StyledStickyBottomContainer = styled.div(() => ({
+export const StyledStickyBottomContainer = styled.div({
   position: "sticky",
   left: 0,
   bottom: 0,
@@ -82,7 +82,7 @@ export const StyledStickyBottomContainer = styled.div(() => ({
   "@media print": {
     position: "static",
   },
-}))
+})
 
 export const StyledInnerBottomContainer = styled.div(({ theme }) => ({
   position: "relative",
@@ -219,7 +219,7 @@ export const StyledAppViewBlockSpacer = styled.div(({ theme }) => {
   }
 })
 
-export const StyledIFrameResizerAnchor = styled.div(() => ({
+export const StyledIFrameResizerAnchor = styled.div({
   position: "relative",
   bottom: "0",
-}))
+})

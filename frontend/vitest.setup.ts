@@ -14,6 +14,11 @@
  * limitations under the License.
  */
 
+import * as polyfill from "polyfill-pseudoclass-has"
+import { vi } from "vitest"
+
+global.jest = vi
+
 if (typeof window.URL.createObjectURL === "undefined") {
   window.URL.createObjectURL = vi.fn()
 }
@@ -28,4 +33,14 @@ console.error = (...args) => {
   }
   // For all other warnings, call the original console.warn
   originalConsoleError(...args)
+}
+
+const originalConsoleWarn = console.warn
+console.warn = (...args) => {
+  if (/`LayersManager` was not found./.test(args[0])) {
+    // If the warning message matches, don't call the original console.warn
+    return
+  }
+  // For all other warnings, call the original console.warn
+  originalConsoleWarn(...args)
 }

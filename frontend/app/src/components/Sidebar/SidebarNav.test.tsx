@@ -15,8 +15,9 @@
  */
 
 import React from "react"
-import "@testing-library/jest-dom"
 
+import { MockedFunction } from "vitest"
+import "@testing-library/jest-dom"
 import * as reactDeviceDetect from "react-device-detect"
 import { fireEvent, screen } from "@testing-library/react"
 
@@ -29,13 +30,13 @@ import {
 
 import SidebarNav, { Props } from "./SidebarNav"
 
-jest.mock("@streamlit/lib/src/util/Hooks", () => ({
+vi.mock("@streamlit/lib/src/util/Hooks", async () => ({
   __esModule: true,
-  ...jest.requireActual("@streamlit/lib/src/util/Hooks"),
-  useIsOverflowing: jest.fn(),
+  ...(await vi.importActual("@streamlit/lib/src/util/Hooks")),
+  useIsOverflowing: vi.fn(),
 }))
 
-const mockUseIsOverflowing = useIsOverflowing as jest.MockedFunction<
+const mockUseIsOverflowing = useIsOverflowing as MockedFunction<
   typeof useIsOverflowing
 >
 
@@ -49,10 +50,11 @@ const getProps = (props: Partial<Props> = {}): Props => ({
     { pageScriptHash: "other_page_hash", pageName: "my_other_page" },
   ],
   navSections: [],
-  collapseSidebar: jest.fn(),
+  collapseSidebar: vi.fn(),
   currentPageScriptHash: "",
   hasSidebarElements: false,
-  onPageChange: jest.fn(),
+  hideParentScrollbar: vi.fn(),
+  onPageChange: vi.fn(),
   endpoints: mockEndpoints(),
   ...props,
 })
@@ -88,7 +90,7 @@ describe("SidebarNav", () => {
     })
 
     it("are added to each link", () => {
-      const buildAppPageURL = jest
+      const buildAppPageURL = vi
         .fn()
         .mockImplementation((pageLinkBaseURL: string, page: IAppPage) => {
           return `http://mock/app/page/${page.pageName}`
@@ -258,7 +260,7 @@ describe("SidebarNav", () => {
     expect(links).toHaveLength(2)
 
     // isActive prop used to style background color, so check that
-    expect(links[0]).toHaveStyle("background-color: transparent")
+    expect(links[0]).toHaveStyle("background-color: rgba(0, 0, 0, 0)")
     expect(links[1]).toHaveStyle("background-color: rgba(151, 166, 195, 0.25)")
   })
 })

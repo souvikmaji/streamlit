@@ -20,17 +20,6 @@ import { darken } from "color2k"
 
 import { Small } from "@streamlit/lib"
 
-export const StyledRerunHeader = styled.div(({ theme }) => ({
-  marginBottom: theme.spacing.sm,
-}))
-
-export const StyledCommandLine = styled.textarea(({ theme }) => ({
-  width: theme.sizes.full,
-  fontFamily: theme.genericFonts.codeFont,
-  fontSize: theme.fontSizes.sm,
-  height: "6rem",
-}))
-
 export const StyledShortcutLabel = styled.span(() => ({
   "&::first-letter": {
     textDecoration: "underline",
@@ -147,10 +136,10 @@ export const StyledDeployErrorContent = styled.div(() => ({
   },
 }))
 
-export const StyledAboutInfo = styled.div(() => ({
+export const StyledAboutInfo = styled.div({
   padding: "0 0 1rem 0",
   overflowY: "scroll",
-}))
+})
 
 export const StyledAboutLink = styled.a(({ theme }) => ({
   color: `${theme.colors.linkText} !important`,

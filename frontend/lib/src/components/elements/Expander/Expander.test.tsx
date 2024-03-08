@@ -24,6 +24,12 @@ import { Block as BlockProto } from "@streamlit/lib/src/proto"
 
 import Expander, { ExpanderProps } from "./Expander"
 
+const mockAnimations = (): void => {
+  Element.prototype.animate = jest
+    .fn()
+    .mockImplementation(() => ({ addEventListener: jest.fn() }))
+}
+
 const getProps = (
   elementProps: Partial<BlockProto.Expandable> = {},
   props: Partial<ExpanderProps> = {}
@@ -39,6 +45,10 @@ const getProps = (
 })
 
 describe("Expander container", () => {
+  beforeEach(() => {
+    mockAnimations()
+  })
+
   it("renders without crashing", () => {
     const props = getProps()
     render(

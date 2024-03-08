@@ -290,7 +290,7 @@ react-build:
 .PHONY: frontend-fast
 # Build frontend into static files faster by setting BUILD_AS_FAST_AS_POSSIBLE=true flag, which disables eslint and typechecking.
 frontend-fast:
-	cd frontend/ ; yarn run buildFast
+	cd frontend/ ; yarn run build
 	rsync -av --delete --delete-excluded --exclude=reports \
 		frontend/app/build/ lib/streamlit/static/
 

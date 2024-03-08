@@ -17,7 +17,7 @@
 import React, { PureComponent, ReactNode } from "react"
 
 import moment from "moment"
-import { HotKeys, KeyMap } from "react-hotkeys"
+import Hotkeys from "react-hot-keys"
 import { enableAllPlugins as enableImmerPlugins } from "immer"
 import classNames from "classnames"
 import without from "lodash/without"
@@ -84,7 +84,6 @@ import {
   ParentMessage,
   PerformanceEvents,
   PresetThemeName,
-  RERUN_PROMPT_MODAL_DIALOG,
   ScriptRunState,
   SessionEvent,
   SessionInfo,
@@ -178,7 +177,7 @@ interface State {
   deployedAppMetadata: DeployedAppMetadata
   libConfig: LibConfig
   appConfig: AppConfig
-  autoReruns: NodeJS.Timer[]
+  autoReruns: NodeJS.Timeout[]
   inputsDisabled: boolean
 }
 
@@ -192,22 +191,6 @@ declare global {
     streamlitDebug: any
     iFrameResizer: any
   }
-}
-
-export const showDevelopmentOptions = (
-  hostIsOwner: boolean | undefined,
-  toolbarMode: Config.ToolbarMode
-): boolean => {
-  if (toolbarMode == Config.ToolbarMode.DEVELOPER) {
-    return true
-  }
-  if (
-    Config.ToolbarMode.VIEWER == toolbarMode ||
-    Config.ToolbarMode.MINIMAL == toolbarMode
-  ) {
-    return false
-  }
-  return hostIsOwner || isLocalhost()
 }
 
 export class App extends PureComponent<Props, State> {
@@ -407,29 +390,6 @@ export class App extends PureComponent<Props, State> {
     }
   }
 
-  /**
-   * Global keyboard shortcuts.
-   */
-  keyMap: KeyMap = {
-    RERUN: "r",
-    CLEAR_CACHE: "c",
-    // We use key up for stop recording to ensure the esc key doesn't trigger
-    // other actions (like exiting modals)
-    STOP_RECORDING: { sequence: "esc", action: "keyup" },
-  }
-
-  keyHandlers = {
-    RERUN: () => {
-      this.rerunScript()
-    },
-    CLEAR_CACHE: () => {
-      if (showDevelopmentOptions(this.state.isOwner, this.state.toolbarMode)) {
-        this.openClearCacheDialog()
-      }
-    },
-    STOP_RECORDING: this.props.screenCast.stopRecording,
-  }
-
   initializeConnectionManager(): void {
     this.connectionManager = new ConnectionManager({
       sessionInfo: this.sessionInfo,
@@ -552,6 +512,22 @@ export class App extends PureComponent<Props, State> {
     this.hostCommunicationMgr.closeHostCommunication()
 
     window.removeEventListener("popstate", this.onHistoryChange, false)
+  }
+
+  static showDevelopmentOptions(
+    hostIsOwner: boolean | undefined,
+    toolbarMode: Config.ToolbarMode
+  ): boolean {
+    if (toolbarMode == Config.ToolbarMode.DEVELOPER) {
+      return true
+    }
+    if (
+      Config.ToolbarMode.VIEWER == toolbarMode ||
+      Config.ToolbarMode.MINIMAL == toolbarMode
+    ) {
+      return false
+    }
+    return hostIsOwner || isLocalhost()
   }
 
   showError(title: string, errorNode: ReactNode): void {
@@ -930,17 +906,6 @@ export class App extends PureComponent<Props, State> {
         onClose: () => {},
       }
       this.openDialog(newDialog)
-    } else if (
-      RERUN_PROMPT_MODAL_DIALOG &&
-      sessionEvent.type === "scriptChangedOnDisk"
-    ) {
-      const newDialog: DialogProps = {
-        type: DialogType.SCRIPT_CHANGED,
-        onRerun: this.rerunScript,
-        onClose: () => {},
-        allowRunOnSave: this.state.allowRunOnSave,
-      }
-      this.openDialog(newDialog)
     }
   }
 
@@ -1023,7 +988,7 @@ export class App extends PureComponent<Props, State> {
 
     if (!fragmentIdsThisRun.length) {
       // This is a normal rerun, remove all the auto reruns intervals
-      this.state.autoReruns.forEach((value: NodeJS.Timer) => {
+      this.state.autoReruns.forEach((value: NodeJS.Timeout) => {
         clearInterval(value)
       })
       this.setState({ autoReruns: [] })
@@ -1045,7 +1010,7 @@ export class App extends PureComponent<Props, State> {
       this.maybeSetState(this.appNavigation.handleNewSession(newSessionProto))
 
       // Set the favicon to its default values
-      this.onPageIconChanged(`${process.env.PUBLIC_URL}/favicon.png`)
+      this.onPageIconChanged(`${import.meta.env.BASE_URL}favicon.png`)
     } else {
       this.setState({
         fragmentIdsThisRun,
@@ -1665,7 +1630,7 @@ export class App extends PureComponent<Props, State> {
       allowRunOnSave: this.state.allowRunOnSave,
       onSave: this.saveSettings,
       onClose: () => {},
-      developerMode: showDevelopmentOptions(
+      developerMode: App.showDevelopmentOptions(
         this.state.isOwner,
         this.state.toolbarMode
       ),
@@ -1783,7 +1748,7 @@ export class App extends PureComponent<Props, State> {
 
   showDeployButton = (): boolean => {
     return (
-      showDevelopmentOptions(this.state.isOwner, this.state.toolbarMode) &&
+      App.showDevelopmentOptions(this.state.isOwner, this.state.toolbarMode) &&
       !this.isInCloudEnvironment() &&
       this.sessionInfo.isSet &&
       !this.sessionInfo.isHello
@@ -1809,6 +1774,32 @@ export class App extends PureComponent<Props, State> {
       })
       backMsg.type = "fileUrlsRequest"
       this.sendBackMsg(backMsg)
+    }
+  }
+
+  handleKeyDown = (keyName: string): void => {
+    switch (keyName) {
+      case "c":
+        // CLEAR CACHE
+        if (
+          App.showDevelopmentOptions(
+            this.state.isOwner,
+            this.state.toolbarMode
+          )
+        ) {
+          this.openClearCacheDialog()
+        }
+        break
+      case "r":
+        // RERUN
+        this.rerunScript()
+        break
+    }
+  }
+
+  handleKeyUp = (keyName: string): void => {
+    if (keyName === "esc") {
+      this.props.screenCast.stopRecording()
     }
   }
 
@@ -1838,7 +1829,7 @@ export class App extends PureComponent<Props, State> {
       appPages,
       navSections,
     } = this.state
-    const developmentMode = showDevelopmentOptions(
+    const developmentMode = App.showDevelopmentOptions(
       this.state.isOwner,
       this.state.toolbarMode
     )
@@ -1862,10 +1853,6 @@ export class App extends PureComponent<Props, State> {
     const widgetsDisabled =
       inputsDisabled || connectionState !== ConnectionState.CONNECTED
 
-    // Attach and focused props provide a way to handle Global Hot Keys
-    // https://github.com/greena13/react-hotkeys/issues/41
-    // attach: DOM element the keyboard listeners should attach to
-    // focused: A way to force focus behaviour
     return (
       <AppContext.Provider
         value={{
@@ -1899,11 +1886,10 @@ export class App extends PureComponent<Props, State> {
             fragmentIdsThisRun: this.state.fragmentIdsThisRun,
           }}
         >
-          <HotKeys
-            keyMap={this.keyMap}
-            handlers={this.keyHandlers}
-            attach={window}
-            focused={true}
+          <Hotkeys
+            keyName="r,c,esc"
+            onKeyDown={this.handleKeyDown}
+            onKeyUp={this.handleKeyUp}
           >
             <StyledApp
               className={outerDivClass}
@@ -1981,7 +1967,7 @@ export class App extends PureComponent<Props, State> {
               />
               {renderedDialog}
             </StyledApp>
-          </HotKeys>
+          </Hotkeys>
         </LibContext.Provider>
       </AppContext.Provider>
     )

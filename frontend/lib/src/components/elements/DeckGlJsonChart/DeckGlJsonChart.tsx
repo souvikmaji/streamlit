@@ -24,7 +24,7 @@ import { withTheme } from "@emotion/react"
 // We don't have Typescript defs for these imports, which makes ESLint unhappy
 /* eslint-disable import/no-extraneous-dependencies */
 import {
-  CartoLayer,
+  // CartoLayer,
   colorBins,
   colorCategories,
   colorContinuous,
@@ -75,7 +75,7 @@ const configuration = {
     ...aggregationLayers,
     ...geoLayers,
     ...meshLayers,
-    CartoLayer,
+    // CartoLayer,
   },
   functions: {
     colorBins,
