@@ -22,16 +22,20 @@ runs:
         pip install pre-commit
         pre-commit install-hooks
       shell: bash
+    - name: Setup pnpm
+      uses: pnpm/action-setup@v4.0.0
+      with:
+        version: 9
     - name: Setup Node
       uses: actions/setup-node@v4
       with:
         node-version-file: ".nvmrc"
-        cache: "yarn"
-        cache-dependency-path: "**/yarn.lock"
+        cache: "pnpm"
+        cache-dependency-path: "frontend/pnpm-lock.yaml"
     - name: Initialize React
       run: |
         # Create the cache directory if it does not exist.
-        mkdir -p $(yarn cache dir)
+        mkdir -p $(pnpm cache dir)
         make react-init
       shell: bash
     # We require protoc >= 3.20, but Ubuntu 22.04 - the OS that these Github

@@ -1059,7 +1059,7 @@ export class App extends PureComponent<Props, State> {
       gatherUsageStats: config.gatherUsageStats,
     })
 
-    this.handleSessionStatusChanged(initialize.sessionStatus)
+    this.handleSessionStatusChanged(initialize.sessionStatus as SessionStatus)
   }
 
   /**

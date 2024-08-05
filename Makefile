@@ -262,53 +262,53 @@ protobuf: check-protoc
 		proto/streamlit/proto/*.proto
 
 	@# JS protobuf generation. The --es6 flag generates a proper es6 module.
-	cd frontend/ ; ( \
+	cd frontend/lib ; ( \
 		echo "/* eslint-disable */" ; \
 		echo ; \
-		yarn --silent pbjs \
-			../proto/streamlit/proto/*.proto \
-			--path=proto -t static-module --wrap es6 \
-	) > ./lib/src/proto.js
+		pnpm --silent pbjs \
+			--path=../../proto -t static-module --wrap es6 \
+			../../proto/streamlit/proto/*.proto \
+	) > ./src/proto.js
 
 	@# Typescript type declarations for our generated protobufs
-	cd frontend/ ; ( \
+	cd frontend/lib ; ( \
 		echo "/* eslint-disable */" ; \
 		echo ; \
-		yarn --silent pbts ./lib/src/proto.js \
-	) > ./lib/src/proto.d.ts
+		pnpm --silent pbts ./src/proto.js \
+	) > ./src/proto.d.ts
 
 .PHONY: react-init
 react-init:
-	cd frontend/ ; yarn install --frozen-lockfile
+	cd frontend/ ; pnpm i --frozen-lockfile
 
 .PHONY: react-build
 react-build:
-	cd frontend/ ; yarn run build
+	cd frontend/ ; pnpm run build
 	rsync -av --delete --delete-excluded --exclude=reports \
 		frontend/app/build/ lib/streamlit/static/
 
 .PHONY: frontend-fast
 # Build frontend into static files faster by setting BUILD_AS_FAST_AS_POSSIBLE=true flag, which disables eslint and typechecking.
 frontend-fast:
-	cd frontend/ ; yarn run build
+	cd frontend/ ; pnpm run build
 	rsync -av --delete --delete-excluded --exclude=reports \
 		frontend/app/build/ lib/streamlit/static/
 
 .PHONY: frontend-lib
 # Build the frontend library
 frontend-lib:
-	cd frontend/ ; yarn run buildLib;
+	cd frontend/ ; pnpm run buildLib;
 
 .PHONY: frontend-app
 # Build the frontend app. One must build the frontend lib first before building the app.
 frontend-app:
-	cd frontend/ ; yarn run buildApp
+	cd frontend/ ; pnpm run buildApp
 
 .PHONY: jslint
 # Lint the JS code
 jslint:
 	cd frontend; \
-		yarn lint;
+		pnpm run lint;
 
 .PHONY: tstypecheck
 # Type check the JS/TS code
@@ -323,12 +323,12 @@ jsformat:
 .PHONY: jstest
 # Run JS unit tests.
 jstest:
-	cd frontend; TESTPATH=$(TESTPATH) yarn run test
+	cd frontend; TESTPATH=$(TESTPATH) pnpm run test
 
 .PHONY: jscoverage
 # Run JS unit tests and generate a coverage report.
 jscoverage:
-	cd frontend; yarn run test --coverage --watchAll=false
+	cd frontend; pnpm run test --coverage --watchAll=false
 
 .PHONY: e2etest
 # Run E2E tests.
@@ -375,14 +375,7 @@ distribute:
 # Rebuild the NOTICES file.
 notices:
 	cd frontend; \
-		yarn licenses generate-disclaimer --silent --production --ignore-platform > ../NOTICES
-
-	@# When `yarn licenses` is run in a yarn workspace, it misnames the project as
-	@# "WORKSPACE AGGREGATOR 2B7C80A7 6734 4A68 BB93 8CC72B9A5DEA". We fix that here.
-	@# There also isn't a portable way to invoke `sed` to edit files in-place, so we have
-	@# sed create a NOTICES.bak backup file that we immediately delete afterwards.
-	sed -i'.bak' 's/PORTIONS OF THE .*PRODUCT/PORTIONS OF THE STREAMLIT PRODUCT/' NOTICES
-	rm -f NOTICES.bak
+		pnpm run notices --output-file=../NOTICES
 
 	./scripts/append_license.sh frontend/app/src/assets/fonts/Source_Code_Pro/Source-Code-Pro.LICENSE
 	./scripts/append_license.sh frontend/app/src/assets/fonts/Source_Sans_Pro/Source-Sans-Pro.LICENSE
@@ -412,14 +405,14 @@ pre-commit-install:
 	pre-commit install
 
 .PHONY: ensure-relative-imports
-# ensure relative imports exist within the lib/dist folder when doing yarn buildLibProd
+# ensure relative imports exist within the lib/dist folder when doing pnpm buildLibProd
 ensure-relative-imports:
 	./scripts/ensure_relative_imports.sh
 
 .PHONY frontend-lib-prod:
 # build the production version for @streamlit/lib
 frontend-lib-prod:
-	cd frontend/ ; yarn run buildLibProd;
+	cd frontend/ ; pnpm run buildLibProd;
 
 .PHONY streamlit-lib-prod:
 # build the production version for @streamlit/lib

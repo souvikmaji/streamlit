@@ -50,9 +50,9 @@ def display_usage():
     example:
 
     When this program is executed with the following command:
-       {prog} frontend/ yarn eslint frontend/src/index.ts
+       {prog} frontend/ pnpm run eslint frontend/src/index.ts
     Then the command will be executed:
-        yarn eslint src/index.ts
+        pnpm run eslint src/index.ts
     and the current working directory will be set to frontend/
 
     positional arguments:
@@ -87,8 +87,8 @@ def fix_arg(subdirectory: str, arg: str) -> str:
 
 
 def try_as_shell(fixed_args: List[str], subdirectory: str):
-    # Windows doesn't know how to run "yarn" using the CreateProcess
-    # WINAPI because it's looking for an executable, and yarn is a node script.
+    # Windows doesn't know how to run "pnpm" using the CreateProcess
+    # WINAPI because it's looking for an executable, and pnpm is a node script.
     # Yarn happens to be the only thing currently run with this patching script,
     # so add a fall-back which tries to run the requested command in a shell
     # if directly calling the process doesn't work.

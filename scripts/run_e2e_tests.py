@@ -224,7 +224,7 @@ def run_test(
 
         # Loop until the test succeeds or is skipped.
         while result not in (SUCCESS, SKIP, QUIT):
-            cypress_command = ["yarn", "cy:run", "--spec", specpath]
+            cypress_command = ["pnpm", "run", "cy:run", "--spec", specpath]
             cypress_command.extend(ctx.cypress_flags)
 
             click.echo(
@@ -316,7 +316,7 @@ def run_app_server():
         "GENERATE_SOURCEMAP": "false",
         "INLINE_RUNTIME_CHUNK": "false",
     }
-    command = ["yarn", "start", "--host"]  # Vite Server needs Host c
+    command = ["pnpm", "start", "--host"]  # Vite Server needs Host c
     proc = AsyncSubprocess(command, cwd=FRONTEND_DIR, env=env)
 
     print("Starting React app server...")

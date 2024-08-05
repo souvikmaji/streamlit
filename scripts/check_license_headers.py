@@ -45,8 +45,11 @@ IGNORE_PATTERN = re.compile(
     r"|(LICENSE|NOTICES|CODE_OF_CONDUCT\.md|README\.md|CONTRIBUTING\.md|SECURITY.md)$"
     # Exclude files, because they do not support comments
     r"|\.(json|prettierrc|nvmrc)$"
+    r"|pnpm-workspace\.yaml$"
     # Exclude generated files, because they don't have any degree of creativity.
     r"|yarn\.lock$"
+    r"|\.npmrc$"
+    r"|pnpm-lock\.yaml$"
     # Exclude pytest config files, because they don't have any degree of creativity.
     r"|pytest\.ini$"
     # Exclude empty files, because they don't have any degree of creativity.

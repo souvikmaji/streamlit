@@ -35,6 +35,9 @@ export default defineConfig({
       typescript: true,
     }),
   ],
+  css: {
+    postcss: {},
+  },
   resolve: {
     alias: {
       "@streamlit/lib/src": path.resolve(__dirname, "../lib/src"),

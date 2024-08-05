@@ -38,18 +38,18 @@ repos:
       # See: https://github.com/pre-commit/pre-commit/issues/1417
       - id: prettier
         name: Prettier
-        # NOTE: This hook currently does not work on Windows due to "yarn" not being an executable and win32api.CreateProcess
-        # turning `subprocess.run(["yarn", "prettier", "--write"])` into a call to `yarn.exe prettier --write` which does not exist
-        entry: ./scripts/run_in_subdirectory.py frontend/ yarn prettier --write
+        # NOTE: This hook currently does not work on Windows due to "pnpm" not being an executable and win32api.CreateProcess
+        # turning `subprocess.run(["pnpm", "-r", "prettier", "--write"])` into a call to `pnpm.exe -r prettier --write` which does not exist
+        entry: ./scripts/run_in_subdirectory.py frontend/ pnpm run prettier --write
         files: ^frontend/.*\.(js|jsx|ts|tsx)$
         exclude: /vendor/
         language: node
         pass_filenames: true
       - id: prettier-yaml
         name: Prettier-yaml
-        # NOTE: This hook currently does not work on Windows due to "yarn" not being an executable and win32api.CreateProcess
-        # turning `subprocess.run(["yarn", "prettier", "--write"])` into a call to `yarn.exe prettier --write` which does not exist
-        entry: ./scripts/run_in_subdirectory.py frontend yarn prettier ../.github --write
+        # NOTE: This hook currently does not work on Windows due to "pnpm" not being an executable and win32api.CreateProcess
+        # turning `subprocess.run(["pnpm", "-r", "prettier", "--write"])` into a call to `pnpm.exe -r prettier --write` which does not exist
+        entry: ./scripts/run_in_subdirectory.py frontend pnpm run prettier ../.github --write
         files: ^.github/.*\.(yml|yaml)$
         language: node
         pass_filenames: false
@@ -58,7 +58,7 @@ repos:
       - id: typecheck-app
         name: Typecheck App
         always_run: true
-        entry: yarn --cwd frontend/app tsc --noEmit
+        entry: ./scripts/run_in_subdirectory.py frontend/ pnpm --filter app typecheck
         files: \.(js|jsx|ts|tsx)$
         language: node
         pass_filenames: false
@@ -68,7 +68,7 @@ repos:
         name: Typecheck Lib
         always_run: true
         # no noEmit flag bc tsconfig.json emitDeclaration key is used
-        entry: yarn --cwd frontend/lib tsc
+        entry: ./scripts/run_in_subdirectory.py frontend/ pnpm --filter lib typecheck
         files: \.(js|jsx|ts|tsx)$
         language: node
         pass_filenames: false
@@ -79,9 +79,9 @@ repos:
       - id: eslint
         name: Eslint
         always_run: true
-        # TODO: This hook currently does not work on Windows due to "yarn" not being an executable and win32api.CreateProcess
-        # turning `subprocess.run(["yarn", "prettier", "--write"])` into a call to `yarn.exe prettier --write` which does not exist
-        entry: ./scripts/run_in_subdirectory.py frontend/ yarn lint --fix
+        # TODO: This hook currently does not work on Windows due to "pnpm" not being an executable and win32api.CreateProcess
+        # turning `subprocess.run(["pnpm", "-r", "prettier", "--write"])` into a call to `pnpm.exe -r prettier --write` which does not exist
+        entry: ./scripts/run_in_subdirectory.py frontend/ pnpm run lint --fix
         files: ^frontend/src/.*\.(js|jsx|ts|tsx)$
         language: node
         pass_filenames: true

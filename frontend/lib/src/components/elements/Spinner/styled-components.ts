@@ -14,33 +14,34 @@
  * limitations under the License.
  */
 
-import styled from "@emotion/styled"
+import styled, { StyledComponent } from "@emotion/styled"
 import { Spinner } from "baseui/spinner"
 import isPropValid from "@emotion/is-prop-valid"
 interface ThemedStyledSpinnerProps {
   usingCustomTheme: boolean
 }
 
-export const ThemedStyledSpinner = styled(Spinner, {
-  shouldForwardProp: isPropValid,
-})<ThemedStyledSpinnerProps>(({ theme, usingCustomTheme }) => {
-  return {
-    fontSize: theme.fontSizes.sm,
-    width: "1.375rem",
-    height: "1.375rem",
-    borderWidth: "3px",
-    radius: "4px",
-    justifyContents: "center",
-    padding: theme.spacing.none,
-    margin: theme.spacing.none,
-    borderColor: theme.colors.fadedText10,
-    borderTopColor: usingCustomTheme
-      ? theme.colors.primary
-      : theme.colors.blue70,
-    flexGrow: 0,
-    flexShrink: 0,
-  }
-})
+export const ThemedStyledSpinner: StyledComponent<ThemedStyledSpinnerProps> =
+  styled(Spinner, {
+    shouldForwardProp: isPropValid,
+  })<ThemedStyledSpinnerProps>(({ theme, usingCustomTheme }) => {
+    return {
+      fontSize: theme.fontSizes.sm,
+      width: "1.375rem",
+      height: "1.375rem",
+      borderWidth: "3px",
+      radius: "4px",
+      justifyContents: "center",
+      padding: theme.spacing.none,
+      margin: theme.spacing.none,
+      borderColor: theme.colors.fadedText10,
+      borderTopColor: usingCustomTheme
+        ? theme.colors.primary
+        : theme.colors.blue70,
+      flexGrow: 0,
+      flexShrink: 0,
+    }
+  })
 
 interface StyledSpinnerProps {
   width: number

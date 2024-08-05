@@ -37,6 +37,10 @@ export default defineConfig({
       input: "src/index.ts",
     },
   },
+  // No clue why but GitHub Actions complains about this
+  css: {
+    postcss: {},
+  },
   resolve: {
     alias: {
       "@streamlit/lib/src": path.resolve(__dirname, "../lib/src"),

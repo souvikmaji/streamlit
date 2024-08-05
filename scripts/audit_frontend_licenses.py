@@ -14,7 +14,7 @@
 # limitations under the License.
 
 """Audit the licenses of all our frontend dependencies (as defined by our
-`yarn.lock` file). If any dependency has an unacceptable license, print it
+`pnpm.lock` file). If any dependency has an unacceptable license, print it
 out and exit with an error code. If all dependencies have acceptable licenses,
 exit normally.
 """
@@ -27,11 +27,10 @@ from typing import NoReturn, Set, Tuple, cast
 
 from typing_extensions import TypeAlias
 
-PackageInfo: TypeAlias = Tuple[str, str, str, str, str, str]
+PackageInfo: TypeAlias = Tuple[str, str]
 
 SCRIPT_DIR = Path(__file__).resolve().parent
-FRONTEND_DIR_LIB = SCRIPT_DIR.parent / "frontend/lib"
-FRONTEND_DIR_APP = SCRIPT_DIR.parent / "frontend/app"
+FRONTEND_DIR = SCRIPT_DIR.parent / "frontend"
 
 # Set of acceptable licenses. If a library uses one of these licenses,
 # we can include it as a dependency.
@@ -67,106 +66,85 @@ ACCEPTABLE_LICENSES = {
     "Apache*",  # https://github.com/saikocat/colorbrewer/blob/master/LICENSE.txt
 }
 
-# Some of our dependencies have licenses that yarn fails to parse, but that
+# Some of our dependencies have licenses that pnpm fails to parse, but that
 # are still acceptable. This set contains all those exceptions. Each entry
 # should include a comment about why it's an exception.
 PACKAGE_EXCEPTIONS: Set[PackageInfo] = {
     (
-        # MIT license: https://github.com/mapbox/jsonlint
-        "@mapbox/jsonlint-lines-primitives",
-        "2.0.2",
-        "UNKNOWN",
-        "git://github.com/mapbox/jsonlint.git",
-        "http://zaa.ch",
-        "Zach Carter",
-    ),
-    (
-        # Apache 2.0 license: https://github.com/google/flatbuffers
-        "flatbuffers",
-        "23.5.26",
-        "SEE LICENSE IN LICENSE",
-        "git+https://github.com/google/flatbuffers.git",
-        "https://google.github.io/flatbuffers/",
-        "The FlatBuffers project",
-    ),
-    (
-        # Mapbox Web SDK license: https://github.com/mapbox/mapbox-gl-js/blob/main/LICENSE.txt
+        # Mapbox Web SDK license: https://github.com/plotly/mapbox-gl-js/blob/v1.13.4/LICENSE.txt
         "@plotly/mapbox-gl",
         "1.13.4",
-        "SEE LICENSE IN LICENSE.txt",
-        "git://github.com/plotly/mapbox-gl-js.git",
-        "Unknown",
-        "Unknown",
     ),
     (
-        # Mapbox Web SDK license: https://github.com/mapbox/mapbox-gl-js/blob/main/LICENSE.txt
+        # MIT License https://github.com/felixge/node-stack-trace/blob/v0.0.9/License
+        "stack-trace",
+        "0.0.9",
+    ),
+    (
+        # Mapbox Web SDK license: https://github.com/mapbox/mapbox-gl-js/blob/v1.13.2/LICENSE.txt
         "mapbox-gl",
-        "1.13.3",
-        "SEE LICENSE IN LICENSE.txt",
-        "git://github.com/mapbox/mapbox-gl-js.git",
-        "Unknown",
-        "Unknown",
+        "1.13.2",
     ),
     (
-        # CC-BY-3.0 license: https://github.com/cartodb/cartocolor#licensing
-        "cartocolor",
-        "4.0.2",
-        "UNKNOWN",
-        "https://github.com/cartodb/cartocolor",
-        "http://carto.com/",
-        "Unknown",
+        # MIT License https://github.com/mapbox/jsonlint/blob/v2.0.2/README.md
+        "@mapbox/jsonlint-lines-primitives",
+        "2.0.2",
     ),
     (
         # Apache-2.0 license: https://github.com/saikocat/colorbrewer/blob/master/LICENSE.txt
         "colorbrewer",
-        "1.0.0",
-        "Apache*",
-        "https://github.com/saikocat/colorbrewer",
-        "http://colorbrewer2.org/",
-        "Cynthia Brewer",
+        "1.5.6",
     ),
 }
 
 
-def get_license_type(package: PackageInfo) -> str:
-    """Return the license type string for a dependency entry."""
-    return package[2]
-
-
 def check_licenses(licenses) -> NoReturn:
-    # `yarn licenses` outputs a bunch of lines.
+    # `pnpm licenses` outputs a bunch of lines.
     # The last line contains the JSON object we care about
-    licenses_json = json.loads(licenses[len(licenses) - 1])
-    assert licenses_json["type"] == "table"
+    licenses_json = json.loads(licenses)
+    # assert licenses_json["type"] == "table"
 
     # Pull out the list of package infos from the JSON.
-    packages = [
-        cast(PackageInfo, tuple(package)) for package in licenses_json["data"]["body"]
-    ]
-
-    # Discover dependency exceptions that are no longer used and can be
-    # jettisoned, and print them out with a warning.
-    unused_exceptions = PACKAGE_EXCEPTIONS.difference(set(packages))
-    if len(unused_exceptions) > 0:
-        for exception in sorted(list(unused_exceptions)):
-            print(f"Unused package exception, please remove: {exception}")
+    licenses = licenses_json.keys()
 
     # Discover packages that don't have an acceptable license, and that don't
     # have an explicit exception. If we have any, we print them out and exit
     # with an error.
-    bad_packages = [
-        package
-        for package in packages
-        if (get_license_type(package) not in ACCEPTABLE_LICENSES)
-        and (package not in PACKAGE_EXCEPTIONS)
-        # workspace aggregator is yarn workspaces
-        and "workspace-aggregator" not in package[0]
+    bad_licenses = [
+        license for license in licenses if license not in ACCEPTABLE_LICENSES
     ]
 
+    bad_packages = {}
+    bad_package_check = set()
+
+    for license in bad_licenses:
+        bad_packages_for_license = []
+
+        for package in licenses_json[license]:
+            pkg_tuple = (package["name"], ", ".join(package["versions"]))
+            bad_package_check.add(pkg_tuple)
+            if (
+                package["name"],
+                ", ".join(package["versions"]),
+            ) not in PACKAGE_EXCEPTIONS:
+                bad_packages_for_license.append(package)
+
+        if len(bad_packages_for_license) > 0:
+            bad_packages[license] = bad_packages_for_license
+
+    # Discover dependency exceptions that are no longer used and can be
+    # jettisoned, and print them out with a warning.
+    unused_exceptions = PACKAGE_EXCEPTIONS.difference(bad_package_check)
+    if len(unused_exceptions) > 0:
+        for exception in sorted(list(unused_exceptions)):
+            print(f"Unused package exception, please remove: {exception}")
+
     if len(bad_packages) > 0:
-        for package in bad_packages:
-            print(f"Unacceptable license: '{get_license_type(package)}' (in {package})")
-        print(f"{len(bad_packages)} unacceptable licenses")
+        for license in bad_packages:
+            for package in bad_packages[license]:
+                print(
+                    f"Unacceptable license: '{license}' (in {package['name']} version {', '.join(package['versions'])})"
+                )
         sys.exit(1)
 
     print(f"No unacceptable licenses")
@@ -174,25 +152,17 @@ def check_licenses(licenses) -> NoReturn:
 
 
 def main() -> NoReturn:
-    # Run `yarn licenses` for lib.
-    licenses_output = (
-        subprocess.check_output(
-            ["yarn", "licenses", "list", "--json", "--production", "--ignore-platform"],
-            cwd=str(FRONTEND_DIR_LIB),
-        )
-        .decode()
-        .splitlines()
-    )
-
-    # Run `yarn licenses` for app.
-    licenses_output = licenses_output + (
-        subprocess.check_output(
-            ["yarn", "licenses", "list", "--json", "--production", "--ignore-platform"],
-            cwd=str(FRONTEND_DIR_APP),
-        )
-        .decode()
-        .splitlines()
-    )
+    # Run `pnpm licenses` for lib.
+    licenses_output = subprocess.check_output(
+        [
+            "pnpm",
+            "licenses",
+            "list",
+            "--json",
+            "--prod",
+        ],
+        cwd=str(FRONTEND_DIR),
+    ).decode()
 
     check_licenses(licenses_output)
 

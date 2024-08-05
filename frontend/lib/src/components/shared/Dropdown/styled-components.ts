@@ -15,12 +15,15 @@
  */
 
 import isPropValid from "@emotion/is-prop-valid"
-import styled from "@emotion/styled"
+import styled, { StyledComponent } from "@emotion/styled"
 import { StyledDropdownListItem } from "baseui/select"
 
-export const ThemedStyledDropdownListItem = styled(StyledDropdownListItem, {
-  shouldForwardProp: isPropValid,
-})(({ theme, $isHighlighted }) => {
+export const ThemedStyledDropdownListItem: StyledComponent<any> = styled(
+  StyledDropdownListItem,
+  {
+    shouldForwardProp: isPropValid,
+  }
+)(({ theme, $isHighlighted }) => {
   const backgroundColor = theme.inSidebar
     ? theme.colors.bgColor
     : theme.colors.secondaryBg
