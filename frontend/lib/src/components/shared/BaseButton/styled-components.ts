@@ -238,10 +238,16 @@ export const StyledIconButton = styled(
     backgroundColor: theme.colors.transparent,
     border: `${theme.sizes.borderWidth} solid ${theme.colors.borderColor}`,
     borderRadius: theme.radii.none,
-    flex: "1 1 0",
-    padding: 0,
-    maxWidth: minWidth,
-    minWidth: minWidth,
+    padding: `${theme.spacing.twoXS} ${theme.spacing.lg}`,
+    // flex: "1 1 0",
+    fontSize: theme.fontSizes.sm,
+    fontWeight: theme.fontWeights.normal,
+    lineHeight: theme.lineHeights.base,
+    maxHeight: theme.sizes.largeLogoHeight,
+    minHeight: theme.sizes.largeLogoHeight,
+    // maxWidth: minWidth, //theme.sizes.contentMaxWidth,
+    // minWidth: minWidth,
+    // width: "max-content",
 
     "&:hover": {
       borderColor: theme.colors.primary,
@@ -273,7 +279,6 @@ export const StyledIconButtonActive = styled(
     backgroundColor: transparentize(theme.colors.primary, 0.9),
     borderColor: theme.colors.primary,
     color: theme.colors.primary,
-
     "&:hover": {
       backgroundColor: transparentize(theme.colors.primary, 0.8),
       borderColor: theme.colors.primary,
