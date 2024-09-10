@@ -226,28 +226,16 @@ export const StyledSecondaryFormSubmitButton = styled(
 
 export const StyledIconButton = styled(
   StyledBaseButton
-)<RequiredBaseButtonProps>(({ size, theme }) => {
-  let minWidth = "12rem"
-  if (size === BaseButtonSize.SMALL) {
-    minWidth = "8rem"
-  } else if (size === BaseButtonSize.LARGE) {
-    minWidth = "20rem"
-  }
-
+)<RequiredBaseButtonProps>(({ theme }) => {
   return {
     backgroundColor: theme.colors.transparent,
+    padding: `${theme.spacing.twoXS} ${theme.spacing.lg}`,
     border: `${theme.sizes.borderWidth} solid ${theme.colors.borderColor}`,
     borderRadius: theme.radii.none,
-    padding: `${theme.spacing.twoXS} ${theme.spacing.lg}`,
-    // flex: "1 1 0",
     fontSize: theme.fontSizes.sm,
-    fontWeight: theme.fontWeights.normal,
     lineHeight: theme.lineHeights.base,
     maxHeight: theme.sizes.largeLogoHeight,
     minHeight: theme.sizes.largeLogoHeight,
-    // maxWidth: minWidth, //theme.sizes.contentMaxWidth,
-    // minWidth: minWidth,
-    // width: "max-content",
 
     "&:hover": {
       borderColor: theme.colors.primary,
