@@ -26,8 +26,7 @@ export enum BaseButtonKind {
   SECONDARY = "secondary",
   TERTIARY = "tertiary",
   LINK = "link",
-  SEGMENT = "icon",
-  SEGMENT_ACTIVE = "iconActive",
+  ICON = "icon",
   BORDERLESS_ICON = "borderlessIcon",
   BORDERLESS_ICON_ACTIVE = "borderlessIconActive",
   MINIMAL = "minimal",
@@ -38,6 +37,8 @@ export enum BaseButtonKind {
   ELEMENT_TOOLBAR = "elementToolbar",
   PILLS = "pills",
   PILLS_ACTIVE = "pillsActive",
+  SEGMENTS = "segments",
+  SEGMENTS_ACTIVE = "segmentsActive",
 }
 
 export enum BaseButtonSize {
@@ -226,6 +227,82 @@ export const StyledSecondaryFormSubmitButton = styled(
 
 export const StyledIconButton = styled(
   StyledBaseButton
+)<RequiredBaseButtonProps>(({ size, theme }) => {
+  const iconPadding: Record<BaseButtonSize, string> = {
+    [BaseButtonSize.XSMALL]: theme.spacing.threeXS,
+    [BaseButtonSize.SMALL]: theme.spacing.twoXS,
+    [BaseButtonSize.MEDIUM]: theme.spacing.md,
+    [BaseButtonSize.LARGE]: theme.spacing.lg,
+  }
+  return {
+    backgroundColor: theme.colors.transparent,
+    border: `${theme.sizes.borderWidth} solid ${theme.colors.transparent}`,
+    padding: iconPadding[size],
+
+    "&:hover": {
+      borderColor: theme.colors.primary,
+      color: theme.colors.primary,
+    },
+    "&:active": {
+      backgroundColor: theme.colors.primary,
+      borderColor: theme.colors.primary,
+      color: theme.colors.white,
+    },
+    "&:not(:active)": {
+      boxShadow: "none",
+    },
+    "&:disabled, &:disabled:hover, &:disabled:active": {
+      backgroundColor: theme.colors.lightGray,
+      borderColor: theme.colors.transparent,
+      color: theme.colors.gray,
+    },
+  }
+})
+
+export const StyledPillsButton = styled(
+  StyledBaseButton
+)<RequiredBaseButtonProps>(({ theme }) => {
+  return {
+    background: theme.colors.bgColor,
+    color: theme.colors.text,
+    border: `${theme.sizes.borderWidth} solid ${theme.colors.borderColor}`,
+    borderRadius: theme.radii.xxxl,
+    padding: `${theme.spacing.twoXS} ${theme.spacing.md}`,
+    fontSize: theme.fontSizes.sm,
+    lineHeight: theme.lineHeights.base,
+    fontWeight: 400,
+    maxHeight: theme.sizes.largeLogoHeight,
+    minHeight: theme.sizes.largeLogoHeight,
+    gap: theme.spacing.xs,
+
+    "&:hover": {
+      borderColor: theme.colors.primary,
+      color: theme.colors.primary,
+    },
+
+    "& p": {
+      fontSize: theme.fontSizes.sm,
+    },
+  }
+})
+
+export const StyledPillsButtonActive = styled(
+  StyledPillsButton
+)<RequiredBaseButtonProps>(({ theme }) => {
+  return {
+    backgroundColor: transparentize(theme.colors.primary, 0.9),
+    borderColor: theme.colors.primary,
+    color: theme.colors.primary,
+    "&:hover": {
+      backgroundColor: transparentize(theme.colors.primary, 0.8),
+      borderColor: theme.colors.primary,
+      color: theme.colors.primary,
+    },
+  }
+})
+
+export const StyledSegmentsButton = styled(
+  StyledBaseButton
 )<RequiredBaseButtonProps>(({ theme }) => {
   return {
     backgroundColor: theme.colors.transparent,
@@ -260,50 +337,8 @@ export const StyledIconButton = styled(
   }
 })
 
-export const StyledIconButtonActive = styled(
-  StyledIconButton
-)<RequiredBaseButtonProps>(({ theme }) => {
-  return {
-    backgroundColor: transparentize(theme.colors.primary, 0.9),
-    borderColor: theme.colors.primary,
-    color: theme.colors.primary,
-    "&:hover": {
-      backgroundColor: transparentize(theme.colors.primary, 0.8),
-      borderColor: theme.colors.primary,
-      color: theme.colors.primary,
-    },
-  }
-})
-
-export const StyledPillsButton = styled(
-  StyledBaseButton
-)<RequiredBaseButtonProps>(({ theme }) => {
-  return {
-    background: theme.colors.bgColor,
-    color: theme.colors.text,
-    border: `${theme.sizes.borderWidth} solid ${theme.colors.borderColor}`,
-    borderRadius: theme.radii.xxxl,
-    padding: `${theme.spacing.twoXS} ${theme.spacing.md}`,
-    fontSize: theme.fontSizes.sm,
-    lineHeight: theme.lineHeights.base,
-    fontWeight: 400,
-    maxHeight: theme.sizes.largeLogoHeight,
-    minHeight: theme.sizes.largeLogoHeight,
-    gap: theme.spacing.xs,
-
-    "&:hover": {
-      borderColor: theme.colors.primary,
-      color: theme.colors.primary,
-    },
-
-    "& p": {
-      fontSize: theme.fontSizes.sm,
-    },
-  }
-})
-
-export const StyledPillsButtonActive = styled(
-  StyledPillsButton
+export const StyledSegmentsButtonActive = styled(
+  StyledSegmentsButton
 )<RequiredBaseButtonProps>(({ theme }) => {
   return {
     backgroundColor: transparentize(theme.colors.primary, 0.9),
