@@ -201,33 +201,33 @@ class ButtonGroupMixin:
         self,
         options: Literal["thumbs"] = ...,
         *,
-        key: str | None = None,
+        key: Key | None = None,
         disabled: bool = False,
         on_change: WidgetCallback | None = None,
-        args: Any | None = None,
-        kwargs: Any | None = None,
+        args: WidgetArgs | None = None,
+        kwargs: WidgetKwargs | None = None,
     ) -> Literal[0, 1] | None: ...
     @overload
     def feedback(
         self,
         options: Literal["faces", "stars"] = ...,
         *,
-        key: str | None = None,
+        key: Key | None = None,
         disabled: bool = False,
         on_change: WidgetCallback | None = None,
-        args: Any | None = None,
-        kwargs: Any | None = None,
+        args: WidgetArgs | None = None,
+        kwargs: WidgetKwargs | None = None,
     ) -> Literal[0, 1, 2, 3, 4] | None: ...
     @gather_metrics("feedback")
     def feedback(
         self,
         options: Literal["thumbs", "faces", "stars"] = "thumbs",
         *,
-        key: str | int | None = None,
+        key: Key | None = None,
         disabled: bool = False,
         on_change: WidgetCallback | None = None,
-        args: Any | None = None,
-        kwargs: Any | None = None,
+        args: WidgetArgs | None = None,
+        kwargs: WidgetKwargs | None = None,
     ) -> int | None:
         """Display a feedback widget.
 
@@ -353,7 +353,7 @@ class ButtonGroupMixin:
         icons: list[str | None] | None = None,
         default: Sequence[V] | V | None = None,
         format_func: Callable[[V], str] | None = None,
-        key: str | int | None = None,
+        key: Key | None = None,
         help: str | None = None,
         on_change: WidgetCallback | None = None,
         args: WidgetArgs | None = None,
