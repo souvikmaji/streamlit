@@ -270,18 +270,36 @@ export const StyledPillsButton = styled(
     padding: `${theme.spacing.twoXS} ${theme.spacing.md}`,
     fontSize: theme.fontSizes.sm,
     lineHeight: theme.lineHeights.base,
-    fontWeight: 400,
-    maxHeight: theme.sizes.largeLogoHeight,
+    fontWeight: theme.fontWeights.normal,
+    height: theme.sizes.largeLogoHeight,
     minHeight: theme.sizes.largeLogoHeight,
+    maxWidth: theme.sizes.contentMaxWidth,
     gap: theme.spacing.xs,
+
+    // show pills with long text in single line and use ellipsis for overflow
+    whiteSpace: "nowrap",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
 
     "&:hover": {
       borderColor: theme.colors.primary,
       color: theme.colors.primary,
     },
 
+    "&:disabled, &:disabled:hover, &:disabled:active": {
+      color: theme.colors.fadedText20,
+      borderColor: theme.colors.fadedText20,
+    },
+
+    "& div": {
+      textOverflow: "ellipsis",
+      overflow: "hidden",
+    },
+
     "& p": {
       fontSize: theme.fontSizes.sm,
+      textOverflow: "ellipsis",
+      overflow: "hidden",
     },
   }
 })
