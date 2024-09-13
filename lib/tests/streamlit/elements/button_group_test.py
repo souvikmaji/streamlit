@@ -154,7 +154,14 @@ def get_command_matrix(
 
     If the test args is a list like [("foo", ("a", "b")), ("bar", ("c", "d"))],
     this function returns following test matrix:
-    [(st.pills, "foo", ("a", "b")), (_interal_button_group, "bar", ("c", "d"))]
+    [
+        (st.pills, "foo", ("a", "b")),
+        (st.pills, "bar", ("c", "d")),
+        (st.segments, "foo", ("a", "b")),
+        (st.segments, "bar", ("c", "d")),
+        (_interal_button_group, "foo", ("a", "b")),
+        (_interal_button_group, "bar", ("c", "d")),
+    ]
 
     The pills and _internal_button_group are wrapped in a lambda to pass default
     arguments that are not shared between them.
@@ -163,6 +170,7 @@ def get_command_matrix(
 
     commands = [
         lambda *args, **kwargs: st.pills("label", *args, **kwargs),
+        lambda *args, **kwargs: st.segments("label", *args, **kwargs),
         lambda *args, **kwargs: ButtonGroupMixin._internal_button_group(
             st._main, *args, **kwargs
         ),
