@@ -189,21 +189,6 @@ def _maybe_raise_selection_mode_warning(selection_mode: str):
         )
 
 
-def _transformed_format_func(
-    option: V,
-    icon: str | None = None,
-    format_func: Callable[[V], str] | None = None,
-) -> Callable[[V, str | None], ButtonGroupProto.Option]:
-    if format_func is None:
-        return ButtonGroupProto.Option(content=str(option), content_icon=icon)
-
-    transformed = format_func(option)
-    return ButtonGroupProto.Option(
-        content=transformed,
-        content_icon=icon,
-    )
-
-
 class ButtonGroupMixin:
     # These overloads are not documented in the docstring, at least not at this time, on
     # the theory that most people won't know what it means. And the Literals here are a
@@ -377,8 +362,8 @@ class ButtonGroupMixin:
         label_visibility: LabelVisibility = "visible",
     ):
         return self._internal_button_group(
-            label,
             options,
+            label=label,
             selection_mode=selection_mode,
             icons=icons,
             default=default,
@@ -412,8 +397,8 @@ class ButtonGroupMixin:
         label_visibility: LabelVisibility = "visible",
     ):
         return self._internal_button_group(
-            label,
             options,
+            label=label,
             selection_mode=selection_mode,
             icons=icons,
             default=default,
@@ -432,9 +417,9 @@ class ButtonGroupMixin:
     # @gather_metrics("button_group")
     def _internal_button_group(
         self,
-        label: str,
         options: OptionSequence[V],
         *,
+        label: str | None = None,
         selection_mode: Literal["single", "multi"] = "single",
         icons: list[str | None] | None = None,
         default: Sequence[V] | V | None = None,
@@ -450,6 +435,19 @@ class ButtonGroupMixin:
     ) -> list[V] | V | None:
         maybe_raise_label_warnings(label, label_visibility)
 
+        def _transformed_format_func(
+            option: V,
+            icon: str | None = None,
+        ) -> ButtonGroupProto.Option:
+            if not format_func:
+                return ButtonGroupProto.Option(content=str(option), content_icon=icon)
+
+            transformed = format_func(option)
+            return ButtonGroupProto.Option(
+                content=transformed,
+                content_icon=icon,
+            )
+
         indexable_options = convert_to_sequence_and_check_comparable(options)
         default_values = get_default_indices(indexable_options, default)
 
@@ -460,9 +458,7 @@ class ButtonGroupMixin:
             selection_mode=selection_mode,
             icons=icons,
             default=default_values,
-            format_func=lambda option, icon: _transformed_format_func(
-                option, icon, format_func
-            ),
+            format_func=_transformed_format_func,
             key=key,
             help=help,
             style=style,
