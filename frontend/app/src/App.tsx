@@ -1470,6 +1470,7 @@ export class App extends PureComponent<Props, State> {
       pageLayouts[prevState.currentPageScriptHash] = prevState.layout
       const newLayout =
         pageLayouts[pageScriptHash] ?? PageConfig.Layout.CENTERED
+      console.log("Backup page layout", prevState.pageLayouts)
       return {
         layout: newLayout,
         pageLayouts: pageLayouts,
