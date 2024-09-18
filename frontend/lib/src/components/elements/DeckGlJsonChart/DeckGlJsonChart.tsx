@@ -28,6 +28,7 @@ import {
   EmotionTheme,
   hasLightBackgroundColor,
 } from "@streamlit/lib/src/theme"
+import Toolbar from "@streamlit/lib/src/components/shared/Toolbar"
 import { withFullScreenWrapper } from "@streamlit/lib/src/components/shared/FullScreenWrapper"
 
 import withMapboxToken from "./withMapboxToken"
@@ -45,7 +46,15 @@ registerLoaders([CSVLoader, GLTFLoader])
 const EMPTY_LAYERS: LayersList = []
 
 export const DeckGlJsonChart: FC<PropsWithHeight> = props => {
-  const { element, height, isFullScreen, width } = props
+  const {
+    collapse,
+    disableFullscreenMode,
+    element,
+    expand,
+    height,
+    isFullScreen,
+    width,
+  } = props
   const theme: EmotionTheme = useTheme()
   const { createTooltip, deck, onViewStateChange, viewState } = useDeckGl({
     element,
@@ -71,6 +80,13 @@ export const DeckGlJsonChart: FC<PropsWithHeight> = props => {
       width={width}
       height={deck.initialViewState.height}
     >
+      <Toolbar
+        isFullScreen={isFullScreen}
+        disableFullscreenMode={disableFullscreenMode}
+        onExpand={expand}
+        onCollapse={collapse}
+        target={StyledDeckGlChart}
+      />
       <DeckGL
         viewState={viewState}
         onViewStateChange={onViewStateChange}
@@ -105,5 +121,5 @@ export const DeckGlJsonChart: FC<PropsWithHeight> = props => {
 }
 
 export default withMapboxToken("st.pydeck_chart")(
-  withFullScreenWrapper(DeckGlJsonChart)
+  withFullScreenWrapper(DeckGlJsonChart, true)
 )
