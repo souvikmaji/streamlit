@@ -17,6 +17,7 @@ from __future__ import annotations
 import io
 import os
 from dataclasses import dataclass
+from pathlib import Path
 from textwrap import dedent
 from typing import (
     TYPE_CHECKING,
@@ -105,8 +106,9 @@ class ButtonMixin:
         label : str
             A short label explaining to the user what this button is for.
             The label can optionally contain GitHub-flavored Markdown of the
-            following types: Bold, Italics, Strikethroughs, Inline Code, and
-            Links.
+            following types: Bold, Italics, Strikethroughs, Inline Code, Links,
+            and Images. Images display like icons, with a max height equal to
+            the font height.
 
             Unsupported Markdown elements are unwrapped so only their children
             (text contents) render. Display unsupported elements as literal
@@ -122,9 +124,7 @@ class ButtonMixin:
         key : str or int
             An optional string or integer to use as the unique key for the widget.
             If this is omitted, a key will be generated for the widget
-            based on its content. Multiple widgets of the same type may
-            not share the same key.
-
+            based on its content. No two widgets may have the same key.
         help : str
             An optional tooltip that gets displayed when the button is
             hovered over.
@@ -161,8 +161,8 @@ class ButtonMixin:
               font library.
 
         disabled : bool
-            An optional boolean, which disables the button if set to True. The
-            default is False.
+            An optional boolean that disables the button if set to ``True``.
+            The default is ``False``.
 
         use_container_width : bool
             Whether to expand the button's width to fill its parent container.
@@ -179,8 +179,8 @@ class ButtonMixin:
             True if the button was clicked on the last run of the app,
             False otherwise.
 
-        Example
-        -------
+        Examples
+        --------
         >>> import streamlit as st
         >>>
         >>> st.button("Reset", type="primary")
@@ -191,6 +191,23 @@ class ButtonMixin:
 
         .. output::
            https://doc-buton.streamlit.app/
+           height: 220px
+
+        Although you can add icons to your buttons through Markdown, the
+        ``icon`` parameter is a convenient and consistent alternative.
+
+        >>> import streamlit as st
+        >>>
+        >>> left, middle, right = st.columns(3)
+        >>> if left.button("Plain button", use_container_width=True):
+        ...     left.markdown("You clicked the plain button.")
+        >>> if middle.button("Emoji button", icon="😃", use_container_width=True):
+        ...     middle.markdown("You clicked the emoji button.")
+        >>> if right.button("Material button", icon=":material/mood:", use_container_width=True):
+        ...     right.markdown("You clicked the Material button.")
+
+        .. output::
+           https://doc-button-icons.streamlit.app/
            height: 220px
 
         """
@@ -255,8 +272,9 @@ class ButtonMixin:
         label : str
             A short label explaining to the user what this button is for.
             The label can optionally contain GitHub-flavored Markdown of the
-            following types: Bold, Italics, Strikethroughs, Inline Code, and
-            Links.
+            following types: Bold, Italics, Strikethroughs, Inline Code, Links,
+            and Images. Images display like icons, with a max height equal to
+            the font height.
 
             Unsupported Markdown elements are unwrapped so only their children
             (text contents) render. Display unsupported elements as literal
@@ -287,8 +305,7 @@ class ButtonMixin:
         key : str or int
             An optional string or integer to use as the unique key for the widget.
             If this is omitted, a key will be generated for the widget
-            based on its content. Multiple widgets of the same type may
-            not share the same key.
+            based on its content. No two widgets may have the same key.
 
         help : str
             An optional tooltip that gets displayed when the button is
@@ -326,8 +343,8 @@ class ButtonMixin:
               font library.
 
         disabled : bool
-            An optional boolean, which disables the download button if set to
-            True. The default is False.
+            An optional boolean that disables the download button if set to
+            ``True``. The default is ``False``.
 
         use_container_width : bool
             Whether to expand the button's width to fill its parent container.
@@ -443,8 +460,9 @@ class ButtonMixin:
         label : str
             A short label explaining to the user what this button is for.
             The label can optionally contain GitHub-flavored Markdown of the
-            following types: Bold, Italics, Strikethroughs, Inline Code, and
-            Links.
+            following types: Bold, Italics, Strikethroughs, Inline Code, Links,
+            and Images. Images display like icons, with a max height equal to
+            the font height.
 
             Unsupported Markdown elements are unwrapped so only their children
             (text contents) render. Display unsupported elements as literal
@@ -487,8 +505,8 @@ class ButtonMixin:
               font library.
 
         disabled : bool
-            An optional boolean, which disables the link button if set to
-            True. The default is False.
+            An optional boolean that disables the link button if set to
+            ``True``. The default is ``False``.
 
         use_container_width : bool
             Whether to expand the button's width to fill its parent container.
@@ -530,7 +548,7 @@ class ButtonMixin:
     @gather_metrics("page_link")
     def page_link(
         self,
-        page: str | StreamlitPage,
+        page: str | Path | StreamlitPage,
         *,
         label: str | None = None,
         icon: str | None = None,
@@ -550,7 +568,7 @@ class ButtonMixin:
 
         Parameters
         ----------
-        page : str or st.Page
+        page : str, Path, or st.Page
             The file path (relative to the main script) or an st.Page indicating
             the page to switch to. Alternatively, this can be the URL to an
             external page (must start with "http://" or "https://").
@@ -558,8 +576,9 @@ class ButtonMixin:
         label : str
             The label for the page link. Labels are required for external pages.
             The label can optionally contain GitHub-flavored Markdown of the
-            following types: Bold, Italics, Strikethroughs, Inline Code, and
-            Links.
+            following types: Bold, Italics, Strikethroughs, Inline Code, Links,
+            and Images. Images display like icons, with a max height equal to
+            the font height.
 
             Unsupported Markdown elements are unwrapped so only their children
             (text contents) render. Display unsupported elements as literal
@@ -594,8 +613,8 @@ class ButtonMixin:
             hovered over.
 
         disabled : bool
-            An optional boolean, which disables the page link if set to
-            ``True``. The default is ``False``.
+            An optional boolean that disables the page link if set to ``True``.
+            The default is ``False``.
 
         use_container_width : bool
             Whether to expand the link's width to fill its parent container.
@@ -709,14 +728,14 @@ class ButtonMixin:
         serde = ButtonSerde()
 
         button_state = register_widget(
-            "download_button",
-            download_button_proto,
+            download_button_proto.id,
             on_change_handler=on_click,
             args=args,
             kwargs=kwargs,
             deserializer=serde.deserialize,
             serializer=serde.serialize,
             ctx=ctx,
+            value_type="trigger_value",
         )
 
         self.dg._enqueue("download_button", download_button_proto)
@@ -750,7 +769,7 @@ class ButtonMixin:
 
     def _page_link(
         self,
-        page: str | StreamlitPage,
+        page: str | Path | StreamlitPage,
         *,  # keyword-only arguments:
         label: str | None = None,
         icon: str | None = None,
@@ -779,6 +798,10 @@ class ButtonMixin:
             if label is None:
                 page_link_proto.label = page.title
         else:
+            # Convert Path to string if necessary
+            if isinstance(page, Path):
+                page = str(page)
+
             # Handle external links:
             if is_url(page):
                 if label is None or label == "":
@@ -902,14 +925,14 @@ class ButtonMixin:
         serde = ButtonSerde()
 
         button_state = register_widget(
-            "button",
-            button_proto,
+            button_proto.id,
             on_change_handler=on_click,
             args=args,
             kwargs=kwargs,
             deserializer=serde.deserialize,
             serializer=serde.serialize,
             ctx=ctx,
+            value_type="trigger_value",
         )
 
         if ctx:

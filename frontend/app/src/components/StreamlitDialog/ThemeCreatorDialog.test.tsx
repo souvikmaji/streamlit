@@ -16,7 +16,6 @@
 
 import React from "react"
 
-import "@testing-library/jest-dom"
 import { fireEvent, screen, within } from "@testing-library/react"
 
 import {
@@ -25,8 +24,10 @@ import {
   fonts,
   LibContextProps,
   lightTheme,
+  mockSessionInfo,
   toThemeInput,
 } from "@streamlit/lib"
+import { MetricsManager } from "@streamlit/app/src/MetricsManager"
 import { customRenderLibContext } from "@streamlit/lib/src/test_util"
 
 import ThemeCreatorDialog, {
@@ -34,14 +35,15 @@ import ThemeCreatorDialog, {
   toMinimalToml,
 } from "./ThemeCreatorDialog"
 
-const mockSetTheme = jest.fn()
-const mockAddThemes = jest.fn()
+const mockSetTheme = vi.fn()
+const mockAddThemes = vi.fn()
 
 const getProps = (
   props: Partial<ThemeCreatorDialogProps> = {}
 ): ThemeCreatorDialogProps => ({
-  backToSettings: jest.fn(),
-  onClose: jest.fn(),
+  backToSettings: vi.fn(),
+  onClose: vi.fn(),
+  metricsMgr: new MetricsManager(mockSessionInfo()),
   ...props,
 })
 
@@ -57,7 +59,7 @@ const getContext = (
 
 Object.assign(navigator, {
   clipboard: {
-    writeText: jest.fn(),
+    writeText: vi.fn(),
   },
 })
 
@@ -164,7 +166,7 @@ font="monospace"
 
 describe("Opened ThemeCreatorDialog", () => {
   afterEach(() => {
-    jest.clearAllMocks()
+    vi.clearAllMocks()
   })
 
   it("should update theme on color change", () => {
@@ -253,20 +255,13 @@ describe("Opened ThemeCreatorDialog", () => {
   })
 
   it("should copy to clipboard", () => {
-    // This hack is used below to get around `shallow` not supporting the
-    // `useState` hook, and emotion's `useTheme` hook (used by Modal) getting
-    // thrown off by us mocking `useContext` above :(
-    const updateCopied = jest.fn()
-    const useStateSpy = jest.spyOn(React, "useState")
-    // @ts-expect-error
-    useStateSpy.mockImplementation(init => [init, updateCopied])
-
     const props = getProps()
     customRenderLibContext(<ThemeCreatorDialog {...props} />, {
       setTheme: mockSetTheme,
       addThemes: mockAddThemes,
     })
 
+    expect(screen.queryByText("Copied to clipboard")).not.toBeInTheDocument()
     const copyBtn = screen.getByRole("button", {
       name: "Copy theme to clipboard",
     })
@@ -275,6 +270,6 @@ describe("Opened ThemeCreatorDialog", () => {
     expect(navigator.clipboard.writeText).toHaveBeenCalledWith(`[theme]
 base="light"
 `)
-    expect(updateCopied).toHaveBeenCalledWith(true)
+    expect(screen.getByText("Copied to clipboard")).toBeInTheDocument()
   })
 })

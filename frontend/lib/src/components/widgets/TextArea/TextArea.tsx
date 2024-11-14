@@ -14,18 +14,17 @@
  * limitations under the License.
  */
 
-import React from "react"
+import React, { FC, memo, useCallback, useRef, useState } from "react"
 
 import { Textarea as UITextArea } from "baseui/textarea"
-import { withTheme } from "@emotion/react"
+import { useTheme } from "@emotion/react"
 import uniqueId from "lodash/uniqueId"
 
 import { TextArea as TextAreaProto } from "@streamlit/lib/src/proto"
-import { FormClearHelper } from "@streamlit/lib/src/components/widgets/Form"
-import {
-  Source,
-  WidgetStateManager,
-} from "@streamlit/lib/src/WidgetStateManager"
+import { WidgetStateManager } from "@streamlit/lib/src/WidgetStateManager"
+import useUpdateUiValue from "@streamlit/lib/src/hooks/useUpdateUiValue"
+import useSubmitFormViaEnterKey from "@streamlit/lib/src/hooks/useSubmitFormViaEnterKey"
+import useOnInputChange from "@streamlit/lib/src/hooks/useOnInputChange"
 import InputInstructions from "@streamlit/lib/src/components/shared/InputInstructions/InputInstructions"
 import {
   StyledWidgetLabelHelp,
@@ -38,242 +37,218 @@ import {
   labelVisibilityProtoValueToEnum,
 } from "@streamlit/lib/src/util/utils"
 import { EmotionTheme } from "@streamlit/lib/src/theme"
+import {
+  useBasicWidgetState,
+  ValueWithSource,
+} from "@streamlit/lib/src/hooks/useBasicWidgetState"
 
 export interface Props {
   disabled: boolean
   element: TextAreaProto
   widgetMgr: WidgetStateManager
   width: number
-  theme: EmotionTheme
   fragmentId?: string
 }
 
-interface State {
+type TextAreaValue = string | null
+
+const getStateFromWidgetMgr = (
+  widgetMgr: WidgetStateManager,
+  element: TextAreaProto
+): TextAreaValue | undefined => {
+  return widgetMgr.getStringValue(element) ?? element.default ?? null
+}
+
+const getDefaultStateFromProto = (element: TextAreaProto): TextAreaValue => {
+  return element.default ?? null
+}
+
+const getCurrStateFromProto = (element: TextAreaProto): TextAreaValue => {
+  return element.value ?? null
+}
+
+const updateWidgetMgrState = (
+  element: TextAreaProto,
+  widgetMgr: WidgetStateManager,
+  valueWithSource: ValueWithSource<TextAreaValue>,
+  fragmentId?: string
+): void => {
+  widgetMgr.setStringValue(
+    element,
+    valueWithSource.value,
+    { fromUi: valueWithSource.fromUi },
+    fragmentId
+  )
+}
+
+const TextArea: FC<Props> = ({
+  disabled,
+  element,
+  widgetMgr,
+  fragmentId,
+  width,
+}) => {
+  const id = useRef(uniqueId("text_area_")).current
+
   /**
    * True if the user-specified state.value has not yet been synced to the WidgetStateManager.
    */
-  dirty: boolean
+  const [dirty, setDirty] = useState(false)
+  /**
+   * Whether the area is currently focused.
+   */
+  const [focused, setFocused] = useState(false)
 
   /**
    * The value specified by the user via the UI. If the user didn't touch this
    * widget's UI, the default value is used.
    */
-  value: string | null
-}
+  const [uiValue, setUiValue] = useState<string | null>(
+    getStateFromWidgetMgr(widgetMgr, element) ?? null
+  )
 
-class TextArea extends React.PureComponent<Props, State> {
-  private readonly formClearHelper = new FormClearHelper()
+  const onFormCleared = useCallback(() => {
+    setUiValue(element.default ?? null)
+    setDirty(true)
+  }, [element])
 
-  private readonly id: string
+  const [value, setValueWithSource] = useBasicWidgetState<
+    TextAreaValue,
+    TextAreaProto
+  >({
+    getStateFromWidgetMgr,
+    getDefaultStateFromProto,
+    getCurrStateFromProto,
+    updateWidgetMgrState,
+    element,
+    widgetMgr,
+    fragmentId,
+    onFormCleared,
+  })
 
-  public state: State = {
-    dirty: false,
-    value: this.initialValue,
-  }
+  useUpdateUiValue(value, uiValue, setUiValue, dirty)
 
-  get initialValue(): string | null {
-    // If WidgetStateManager knew a value for this widget, initialize to that.
-    // Otherwise, use the default value from the widget protobuf.
-    const storedValue = this.props.widgetMgr.getStringValue(this.props.element)
-    return storedValue ?? this.props.element.default ?? null
-  }
+  const theme: EmotionTheme = useTheme()
 
-  constructor(props: Props) {
-    super(props)
-    this.id = uniqueId("text_area_")
-  }
+  const commitWidgetValue = useCallback((): void => {
+    setDirty(false)
+    setValueWithSource({ value: uiValue, fromUi: true })
+  }, [uiValue, setValueWithSource])
 
-  public componentDidMount(): void {
-    if (this.props.element.setValue) {
-      this.updateFromProtobuf()
-    } else {
-      this.commitWidgetValue({ fromUi: false })
+  const onBlur = useCallback(() => {
+    if (dirty) {
+      commitWidgetValue()
     }
-  }
+    setFocused(false)
+  }, [dirty, commitWidgetValue])
 
-  public componentDidUpdate(): void {
-    this.maybeUpdateFromProtobuf()
-  }
+  const onFocus = useCallback(() => {
+    setFocused(true)
+  }, [])
 
-  public componentWillUnmount(): void {
-    this.formClearHelper.disconnect()
-  }
+  const onChange = useOnInputChange({
+    formId: element.formId,
+    maxChars: element.maxChars,
+    setDirty,
+    setUiValue,
+    setValueWithSource,
+  })
 
-  private maybeUpdateFromProtobuf(): void {
-    const { setValue } = this.props.element
-    if (setValue) {
-      this.updateFromProtobuf()
-    }
-  }
+  const onKeyDown = useSubmitFormViaEnterKey(
+    element.formId,
+    commitWidgetValue,
+    dirty,
+    widgetMgr,
+    fragmentId,
+    true
+  )
 
-  private updateFromProtobuf(): void {
-    const { value } = this.props.element
-    this.props.element.setValue = false
-    this.setState({ value: value ?? null }, () => {
-      this.commitWidgetValue({ fromUi: false })
-    })
-  }
+  const style = { width }
+  const { height, placeholder, formId } = element
 
-  /** Commit state.value to the WidgetStateManager. */
-  private commitWidgetValue = (source: Source): void => {
-    const { widgetMgr, element, fragmentId } = this.props
-    widgetMgr.setStringValue(element, this.state.value, source, fragmentId)
-    this.setState({ dirty: false })
-  }
+  // Show "Please enter" instructions if in a form & allowed, or not in form and state is dirty.
+  const allowEnterToSubmit = isInForm({ formId })
+    ? widgetMgr.allowFormEnterToSubmit(formId)
+    : dirty
 
-  /**
-   * If we're part of a clear_on_submit form, this will be called when our
-   * form is submitted. Restore our default value and update the WidgetManager.
-   */
-  private onFormCleared = (): void => {
-    this.setState(
-      (_, prevProps) => {
-        return { value: prevProps.element.default ?? null }
-      },
-      () => this.commitWidgetValue({ fromUi: true })
-    )
-  }
+  // Hide input instructions for small widget sizes.
+  const shouldShowInstructions =
+    focused && width > theme.breakpoints.hideWidgetDetails
 
-  private onBlur = (): void => {
-    if (this.state.dirty) {
-      this.commitWidgetValue({ fromUi: true })
-    }
-  }
-
-  private onChange = (e: React.ChangeEvent<HTMLTextAreaElement>): void => {
-    const { value } = e.target
-    const { element } = this.props
-    const { maxChars } = element
-
-    if (maxChars !== 0 && value.length > maxChars) {
-      return
-    }
-
-    // mark it dirty but don't update its value in the WidgetMgr
-    // This means that individual keypresses won't trigger a script re-run.
-    this.setState({ dirty: true, value })
-  }
-
-  isEnterKeyPressed = (
-    event: React.KeyboardEvent<HTMLTextAreaElement>
-  ): boolean => {
-    const { keyCode, key } = event
-
-    // Using keyCode as well due to some different behaviors on Windows
-    // https://bugs.chromium.org/p/chromium/issues/detail?id=79407
-    return (
-      (key === "Enter" || keyCode === 13 || keyCode === 10) &&
-      // Do not send the sentence being composed when Enter is typed into the IME.
-      !(event.nativeEvent?.isComposing === true)
-    )
-  }
-
-  private onKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>): void => {
-    const { metaKey, ctrlKey } = e
-    const { dirty } = this.state
-    const { element, widgetMgr, fragmentId } = this.props
-    const { formId } = element
-    const allowFormEnterToSubmit = widgetMgr.allowFormEnterToSubmit(formId)
-
-    if (this.isEnterKeyPressed(e) && (ctrlKey || metaKey) && dirty) {
-      e.preventDefault()
-
-      this.commitWidgetValue({ fromUi: true })
-      if (allowFormEnterToSubmit) {
-        widgetMgr.submitForm(formId, fragmentId)
-      }
-    }
-  }
-
-  public render(): React.ReactNode {
-    const { element, disabled, width, widgetMgr, theme } = this.props
-    const { value, dirty } = this.state
-    const style = { width }
-    const { height, placeholder, formId } = element
-    // Show "Please enter" instructions if in a form & allowed, or not in form
-    const allowEnterToSubmit =
-      widgetMgr.allowFormEnterToSubmit(formId) || !isInForm({ formId })
-
-    // Manage our form-clear event handler.
-    this.formClearHelper.manageFormClearListener(
-      widgetMgr,
-      formId,
-      this.onFormCleared
-    )
-
-    return (
-      <div className="stTextArea" data-testid="stTextArea" style={style}>
-        <WidgetLabel
-          label={element.label}
-          disabled={disabled}
-          labelVisibility={labelVisibilityProtoValueToEnum(
-            element.labelVisibility?.value
-          )}
-          htmlFor={this.id}
-        >
-          {element.help && (
-            <StyledWidgetLabelHelp>
-              <TooltipIcon
-                content={element.help}
-                placement={Placement.TOP_RIGHT}
-              />
-            </StyledWidgetLabelHelp>
-          )}
-        </WidgetLabel>
-        <UITextArea
-          value={value ?? ""}
-          placeholder={placeholder}
-          onBlur={this.onBlur}
-          onChange={this.onChange}
-          onKeyDown={this.onKeyDown}
-          aria-label={element.label}
-          disabled={disabled}
-          id={this.id}
-          overrides={{
-            Input: {
-              style: {
-                lineHeight: theme.lineHeights.inputWidget,
-                height: height ? `${height}px` : "",
-                minHeight: "95px",
-                resize: "vertical",
-                "::placeholder": {
-                  opacity: "0.7",
-                },
-                // Baseweb requires long-hand props, short-hand leads to weird bugs & warnings.
-                paddingRight: theme.spacing.lg,
-                paddingLeft: theme.spacing.lg,
-                paddingBottom: theme.spacing.lg,
-                paddingTop: theme.spacing.lg,
-              },
-            },
-            Root: {
-              props: {
-                "data-testid": "stTextAreaRootElement",
-              },
-              style: {
-                // Baseweb requires long-hand props, short-hand leads to weird bugs & warnings.
-                borderLeftWidth: theme.sizes.borderWidth,
-                borderRightWidth: theme.sizes.borderWidth,
-                borderTopWidth: theme.sizes.borderWidth,
-                borderBottomWidth: theme.sizes.borderWidth,
-              },
-            },
-          }}
-        />
-        {/* Hide the "Please enter to apply" text in small widget sizes */}
-        {width > theme.breakpoints.hideWidgetDetails && (
-          <InputInstructions
-            dirty={dirty}
-            value={value ?? ""}
-            maxLength={element.maxChars}
-            type={"multiline"}
-            inForm={isInForm({ formId })}
-            allowEnterToSubmit={allowEnterToSubmit}
-          />
+  return (
+    <div className="stTextArea" data-testid="stTextArea" style={style}>
+      <WidgetLabel
+        label={element.label}
+        disabled={disabled}
+        labelVisibility={labelVisibilityProtoValueToEnum(
+          element.labelVisibility?.value
         )}
-      </div>
-    )
-  }
+        htmlFor={id}
+      >
+        {element.help && (
+          <StyledWidgetLabelHelp>
+            <TooltipIcon
+              content={element.help}
+              placement={Placement.TOP_RIGHT}
+            />
+          </StyledWidgetLabelHelp>
+        )}
+      </WidgetLabel>
+      <UITextArea
+        value={uiValue ?? ""}
+        placeholder={placeholder}
+        onBlur={onBlur}
+        onFocus={onFocus}
+        onChange={onChange}
+        onKeyDown={onKeyDown}
+        aria-label={element.label}
+        disabled={disabled}
+        id={id}
+        overrides={{
+          Input: {
+            style: {
+              lineHeight: theme.lineHeights.inputWidget,
+
+              // The default height of the text area is calculated to perfectly fit 3 lines of text.
+              height: height ? `${height}px` : "",
+              minHeight: theme.sizes.largestElementHeight,
+              resize: "vertical",
+              "::placeholder": {
+                opacity: "0.7",
+              },
+              // Baseweb requires long-hand props, short-hand leads to weird bugs & warnings.
+              paddingRight: theme.spacing.lg,
+              paddingLeft: theme.spacing.lg,
+              paddingBottom: theme.spacing.lg,
+              paddingTop: theme.spacing.lg,
+            },
+          },
+          Root: {
+            props: {
+              "data-testid": "stTextAreaRootElement",
+            },
+            style: {
+              // Baseweb requires long-hand props, short-hand leads to weird bugs & warnings.
+              borderLeftWidth: theme.sizes.borderWidth,
+              borderRightWidth: theme.sizes.borderWidth,
+              borderTopWidth: theme.sizes.borderWidth,
+              borderBottomWidth: theme.sizes.borderWidth,
+            },
+          },
+        }}
+      />
+      {shouldShowInstructions && (
+        <InputInstructions
+          dirty={dirty}
+          value={uiValue ?? ""}
+          maxLength={element.maxChars}
+          type={"multiline"}
+          inForm={isInForm({ formId })}
+          allowEnterToSubmit={allowEnterToSubmit}
+        />
+      )}
+    </div>
+  )
 }
 
-export default withTheme(TextArea)
+export default memo(TextArea)

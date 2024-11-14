@@ -19,17 +19,18 @@ import React, { PureComponent, ReactNode } from "react"
 import { EmotionIcon } from "@emotion-icons/emotion-icon"
 import { Ellipses, Info, Warning } from "@emotion-icons/open-iconic"
 import { withTheme } from "@emotion/react"
-import { HotKeys } from "react-hotkeys"
+import Hotkeys from "react-hot-keys"
 import { CSSTransition } from "react-transition-group"
 import { SignalConnection } from "typed-signals"
 
+import iconRunning from "@streamlit/app/src/assets/img/icon_running.gif"
+import newYearsRunning from "@streamlit/app/src/assets/img/fireworks.gif"
 import {
   BaseButton,
   BaseButtonKind,
   EmotionTheme,
   Icon,
   Placement,
-  RERUN_PROMPT_MODAL_DIALOG,
   ScriptRunState,
   SessionEvent,
   Timer,
@@ -41,12 +42,6 @@ import {
 } from "@streamlit/lib/src/util/utils"
 import { ConnectionState } from "@streamlit/app/src/connection/ConnectionState"
 import { SessionEventDispatcher } from "@streamlit/app/src/SessionEventDispatcher"
-/*
- * IMPORTANT: If you change the asset import below, make sure it still works if Streamlit is served
- * from a subpath.
- */
-import iconRunning from "@streamlit/app/src/assets/img/icon_running.gif"
-import newYearsRunning from "@streamlit/app/src/assets/img/fireworks.gif"
 
 import {
   StyledAppButtonContainer,
@@ -114,6 +109,11 @@ interface State {
    * shown, even if they'd otherwise be minimized.
    */
   promptHovered: boolean
+
+  /**
+   * True if the running man animation should be displayed.
+   */
+  showRunningMan: boolean
 }
 
 interface ConnectionStateUI {
@@ -129,6 +129,9 @@ const PROMPT_DISPLAY_INITIAL_TIMEOUT_MS = 15 * 1000
 // and then unhovered on it.
 const PROMPT_DISPLAY_HOVER_TIMEOUT_MS = 1.0 * 1000
 
+// Delay time for displaying running man animation.
+const RUNNING_MAN_DISPLAY_DELAY_TIME_MS = 500
+
 /**
  * Displays various script- and connection-related info: our WebSocket
  * connection status, the run-state of our script, and other transient events.
@@ -141,9 +144,7 @@ class StatusWidget extends PureComponent<StatusWidgetProps, State> {
 
   private readonly minimizePromptTimer = new Timer()
 
-  private readonly keyHandlers: {
-    [key: string]: (keyEvent?: KeyboardEvent) => void
-  }
+  private readonly showRunningManTimer = new Timer()
 
   constructor(props: StatusWidgetProps) {
     super(props)
@@ -153,13 +154,14 @@ class StatusWidget extends PureComponent<StatusWidgetProps, State> {
       promptMinimized: false,
       scriptChangedOnDisk: false,
       promptHovered: false,
+      showRunningMan: false,
     }
+  }
 
-    this.keyHandlers = {
-      a: this.handleAlwaysRerunClick,
-      // No handler for 'r' since it's handled by app.jsx and precedence
-      // isn't working when multiple components handle the same key
-      // 'r': this.handleRerunClick,
+  handleKeyDown = (keyName: string): void => {
+    // NOTE: 'r' is handled at the App Level
+    if (keyName === "a") {
+      this.handleAlwaysRerunClick()
     }
   }
 
@@ -191,6 +193,7 @@ class StatusWidget extends PureComponent<StatusWidgetProps, State> {
     }
 
     this.minimizePromptTimer.cancel()
+    this.showRunningManTimer.cancel()
 
     window.removeEventListener("scroll", this.handleScroll)
   }
@@ -215,6 +218,12 @@ class StatusWidget extends PureComponent<StatusWidgetProps, State> {
         this.setState({ promptMinimized: true })
       }, timeout)
     }
+  }
+
+  private showRunningManAfterInitialDelay(delay: number): void {
+    this.showRunningManTimer.setTimeout(() => {
+      this.setState({ showRunningMan: true })
+    }, delay)
   }
 
   private static shouldMinimize(): boolean {
@@ -281,11 +290,16 @@ class StatusWidget extends PureComponent<StatusWidgetProps, State> {
         // In the latter case, the server should get around to actually
         // re-running the script in a second or two, but we can appear
         // more responsive by claiming it's started immemdiately.
+
+        this.showRunningManAfterInitialDelay(RUNNING_MAN_DISPLAY_DELAY_TIME_MS)
         return this.renderScriptIsRunning()
       }
-      if (!RERUN_PROMPT_MODAL_DIALOG && this.state.scriptChangedOnDisk) {
+      if (this.state.scriptChangedOnDisk) {
         return this.renderRerunScriptPrompt()
       }
+    }
+    if (this.props.scriptRunState === ScriptRunState.NOT_RUNNING) {
+      this.setState({ showRunningMan: false })
     }
 
     return this.renderConnectionStatus()
@@ -352,7 +366,7 @@ class StatusWidget extends PureComponent<StatusWidgetProps, State> {
       />
     )
 
-    return (
+    return this.state.showRunningMan ? (
       <StyledAppStatus>
         {minimized ? (
           <Tooltip
@@ -372,12 +386,13 @@ class StatusWidget extends PureComponent<StatusWidgetProps, State> {
         </StyledAppStatusLabel>
         {stopButton}
       </StyledAppStatus>
+    ) : (
+      <></>
     )
   }
 
   /**
    * "Source file changed. [Rerun] [Always Rerun]"
-   * (This is only shown when the RERUN_PROMPT_MODAL_DIALOG feature flag is false)
    */
   private renderRerunScriptPrompt(): ReactNode {
     const rerunRequested =
@@ -385,10 +400,8 @@ class StatusWidget extends PureComponent<StatusWidgetProps, State> {
     const minimized = this.state.promptMinimized && !this.state.promptHovered
     const { colors } = this.props.theme
 
-    // Not sure exactly why attach and focused are necessary on the
-    // HotKeys component here but its not working without them
     return (
-      <HotKeys handlers={this.keyHandlers} attach={window} focused={true}>
+      <Hotkeys keyName="a" onKeyDown={this.handleKeyDown}>
         <div
           onMouseEnter={this.onAppPromptHover}
           onMouseLeave={this.onAppPromptUnhover}
@@ -415,7 +428,7 @@ class StatusWidget extends PureComponent<StatusWidgetProps, State> {
               )}
           </StyledAppStatus>
         </div>
-      </HotKeys>
+      </Hotkeys>
     )
   }
 

@@ -14,19 +14,24 @@
  * limitations under the License.
  */
 
-import React from "react"
+import React, { FC } from "react"
 
 import JSON5 from "json5"
-import { screen } from "@testing-library/react"
-import { renderHook } from "@testing-library/react-hooks"
-import { PickingInfo } from "@deck.gl/core/typed"
+import { act, screen } from "@testing-library/react"
+import { PickingInfo } from "@deck.gl/core"
+import { userEvent } from "@testing-library/user-event"
 
-import { render } from "@streamlit/lib/src/test_util"
+import {
+  render,
+  renderHook,
+} from "@streamlit/lib/src/components/shared/ElementFullscreen/testUtils"
 import { DeckGlJsonChart as DeckGlJsonChartProto } from "@streamlit/lib/src/proto"
-import "@testing-library/jest-dom"
+import { WidgetStateManager } from "@streamlit/lib/src/WidgetStateManager"
+import { mockTheme } from "@streamlit/lib/src/mocks/mockTheme"
+import { ElementFullscreenContext } from "@streamlit/lib/src/components/shared/ElementFullscreen/ElementFullscreenContext"
+import { useRequiredContext } from "@streamlit/lib/src/hooks/useRequiredContext"
 
-import { DeckGlJsonChart } from "./DeckGlJsonChart"
-import type { PropsWithHeight } from "./types"
+import type { DeckGLProps } from "./types"
 import { useDeckGl, UseDeckGlProps } from "./useDeckGl"
 
 const mockInitialViewState = {
@@ -40,14 +45,15 @@ const mockInitialViewState = {
   zoom: 6,
 }
 
-jest.mock("@streamlit/lib/src/theme", () => ({
-  hasLightBackgroundColor: jest.fn(() => false),
+vi.mock("@streamlit/lib/src/theme", async () => ({
+  ...(await vi.importActual("@streamlit/lib/src/theme")),
+  hasLightBackgroundColor: vi.fn(() => false),
 }))
 
 const getProps = (
   elementProps: Partial<DeckGlJsonChartProto> = {},
   initialViewStateProps: Record<string, unknown> = {}
-): PropsWithHeight => {
+): DeckGLProps => {
   const json = {
     initialViewState: mockInitialViewState,
     layers: [
@@ -78,10 +84,12 @@ const getProps = (
       json: JSON.stringify(json),
       ...elementProps,
     }),
-    width: 0,
     mapboxToken: "mapboxToken",
-    height: undefined,
-    isFullScreen: false,
+    widgetMgr: new WidgetStateManager({
+      sendRerunBackMsg: vi.fn(),
+      formsDataChanged: vi.fn(),
+    }),
+    fragmentId: "myFragmentId",
   }
 }
 
@@ -92,19 +100,9 @@ const getUseDeckGlProps = (
   return {
     ...getProps(elementProps, initialViewStateProps),
     isLightTheme: false,
+    theme: mockTheme.emotion,
   }
 }
-
-describe("DeckGlJsonChart element", () => {
-  it("renders without crashing", () => {
-    const props = getProps()
-
-    render(<DeckGlJsonChart {...props} />)
-
-    const deckGlJsonChart = screen.getByTestId("stDeckGlJsonChart")
-    expect(deckGlJsonChart).toBeVisible()
-  })
-})
 
 describe("#useDeckGl", () => {
   it("should merge client and server changes in viewState", () => {
@@ -246,7 +244,7 @@ describe("#useDeckGl", () => {
       mapStyle: "mapbox://styles/mapbox/light-v9",
     }
 
-    const mockJsonParse = jest.fn().mockReturnValue(newJson)
+    const mockJsonParse = vi.fn().mockReturnValue(newJson)
 
     beforeEach(() => {
       JSON5.parse = mockJsonParse
@@ -265,10 +263,6 @@ describe("#useDeckGl", () => {
         newProps: getUseDeckGlProps(undefined, { zoom: 19 }),
       },
       {
-        description: "should call JSON5.parse when FullScreen state changes",
-        newProps: { isFullScreen: true },
-      },
-      {
         description: "should call JSON5.parse when theme state changes",
         newProps: { isLightTheme: true },
       },
@@ -285,6 +279,129 @@ describe("#useDeckGl", () => {
       rerender({ ...initialProps, ...newProps })
 
       expect(JSON5.parse).toHaveBeenCalledTimes(2)
+    })
+
+    it("should call JSON5.parse when isFullScreen changes", async () => {
+      const MyComponent: FC<UseDeckGlProps> = props => {
+        useDeckGl(props)
+        const { expand } = useRequiredContext(ElementFullscreenContext)
+
+        return <button onClick={expand}>Expand</button>
+      }
+
+      render(<MyComponent {...getUseDeckGlProps()} />)
+
+      expect(JSON5.parse).toHaveBeenCalledTimes(1)
+
+      await userEvent.click(screen.getByText("Expand"))
+
+      expect(JSON5.parse).toHaveBeenCalledTimes(2)
+    })
+  })
+
+  describe("selectionMode", () => {
+    it("should be undefined when allSelectionModes is empty", () => {
+      const initialProps = getUseDeckGlProps({ selectionMode: [] })
+      const { result } = renderHook(props => useDeckGl(props), {
+        initialProps,
+      })
+      expect(result.current.selectionMode).toBeUndefined()
+    })
+
+    it("should be defined when allSelectionModes has single object select", () => {
+      const initialProps = getUseDeckGlProps({
+        selectionMode: [DeckGlJsonChartProto.SelectionMode.SINGLE_OBJECT],
+      })
+      const { result } = renderHook(props => useDeckGl(props), {
+        initialProps,
+      })
+      expect(result.current.selectionMode).toBe(
+        DeckGlJsonChartProto.SelectionMode.SINGLE_OBJECT
+      )
+    })
+
+    it("should be defined when allSelectionModes has multi object select", () => {
+      const initialProps = getUseDeckGlProps({
+        selectionMode: [DeckGlJsonChartProto.SelectionMode.MULTI_OBJECT],
+      })
+      const { result } = renderHook(props => useDeckGl(props), {
+        initialProps,
+      })
+      expect(result.current.selectionMode).toBe(
+        DeckGlJsonChartProto.SelectionMode.MULTI_OBJECT
+      )
+    })
+
+    it("should return the first selection mode given, if multiple are given", () => {
+      const initialProps = getUseDeckGlProps({
+        selectionMode: [
+          DeckGlJsonChartProto.SelectionMode.MULTI_OBJECT,
+          DeckGlJsonChartProto.SelectionMode.SINGLE_OBJECT,
+        ],
+      })
+      const { result } = renderHook(props => useDeckGl(props), {
+        initialProps,
+      })
+      expect(result.current.selectionMode).toBe(
+        DeckGlJsonChartProto.SelectionMode.MULTI_OBJECT
+      )
+    })
+  })
+
+  describe("isSelectionModeActivated", () => {
+    it("should activate selection mode when selectionMode is defined", () => {
+      const initialProps = getUseDeckGlProps({
+        selectionMode: [DeckGlJsonChartProto.SelectionMode.SINGLE_OBJECT],
+      })
+      const { result } = renderHook(props => useDeckGl(props), {
+        initialProps,
+      })
+      expect(result.current.isSelectionModeActivated).toBe(true)
+    })
+
+    it("should not activate selection mode when selectionMode is undefined", () => {
+      const initialProps = getUseDeckGlProps({ selectionMode: [] })
+      const { result } = renderHook(props => useDeckGl(props), {
+        initialProps,
+      })
+      expect(result.current.isSelectionModeActivated).toBe(false)
+    })
+  })
+
+  describe("hasActiveSelection", () => {
+    it("should be false when selection is empty", () => {
+      const initialProps = getUseDeckGlProps({
+        selectionMode: [DeckGlJsonChartProto.SelectionMode.SINGLE_OBJECT],
+      })
+      const { result } = renderHook(props => useDeckGl(props), {
+        initialProps,
+      })
+      expect(result.current.hasActiveSelection).toBe(false)
+    })
+
+    it("should be true when selection is not empty", () => {
+      const initialProps = getUseDeckGlProps({
+        selectionMode: [DeckGlJsonChartProto.SelectionMode.SINGLE_OBJECT],
+      })
+      const { result, rerender } = renderHook(props => useDeckGl(props), {
+        initialProps,
+      })
+
+      act(() => {
+        result.current.setSelection({
+          fromUi: true,
+          value: {
+            selection: {
+              indices: { "0533490f-fcf9-4dc0-8c94-ae4fbd42eb6f": [0] },
+              objects: { "0533490f-fcf9-4dc0-8c94-ae4fbd42eb6f": [{}] },
+            },
+          },
+        })
+      })
+
+      rerender()
+
+      expect(result.current.hasActiveSelection).toBe(true)
     })
   })
 })

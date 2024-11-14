@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import produce, { Draft } from "immer"
+import { Draft, default as produce } from "immer"
 import { Long, util } from "protobufjs"
 import { Signal, SignalConnection } from "typed-signals"
 
@@ -680,7 +680,7 @@ export class WidgetStateManager {
   }
 
   /** Store the IDs of all forms with in-progress uploads. */
-  public setFormsWithUploads(formsWithUploads: Set<string>): void {
+  public setFormsWithUploadsInProgress(formsWithUploads: Set<string>): void {
     this.updateFormsData(draft => {
       draft.formsWithUploads = formsWithUploads
     })

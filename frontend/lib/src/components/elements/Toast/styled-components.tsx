@@ -21,9 +21,11 @@ export const StyledViewButton = styled.button(({ theme }) => ({
   lineHeight: theme.lineHeights.base,
   color: theme.colors.fadedText60,
   backgroundColor: theme.colors.transparent,
+  fontFamily: "inherit",
+  margin: theme.spacing.none,
   border: "none",
   boxShadow: "none",
-  padding: "0px",
+  padding: theme.spacing.none,
   "&:hover, &:active, &:focus": {
     border: "none",
     outline: "none",
@@ -65,4 +67,7 @@ export const StyledMessageWrapper = styled.div(({ theme }) => ({
   minHeight: "100%",
   fontSize: theme.fontSizes.sm,
   lineHeight: theme.lineHeights.base,
+  div: {
+    display: "inline-flex",
+  },
 }))

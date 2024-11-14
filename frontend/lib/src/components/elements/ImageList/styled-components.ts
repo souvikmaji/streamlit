@@ -22,15 +22,16 @@ export const StyledImageList = styled.div(({ theme }) => ({
   flexWrap: "wrap",
   // Not supported in Safari, but at least it's not a regression for those users:
   rowGap: theme.spacing.lg,
+  maxWidth: "100%",
 }))
 
-export const StyledImageContainer = styled.div(() => ({
+export const StyledImageContainer = styled.div({
   display: "flex",
   flexDirection: "column",
   alignItems: "stretch",
   width: "auto",
   flexGrow: 0,
-}))
+})
 
 export const StyledCaption = styled.div(({ theme }) => ({
   fontFamily: theme.genericFonts.bodyFont,

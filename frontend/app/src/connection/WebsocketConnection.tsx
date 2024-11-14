@@ -19,6 +19,7 @@ import React, { Fragment } from "react"
 import styled from "@emotion/styled"
 import axios from "axios"
 
+import { StyledPre } from "@streamlit/lib/src/components/elements/CodeBlock/styled-components"
 import {
   isNullOrUndefined,
   notNullOrUndefined,
@@ -440,7 +441,7 @@ export class WebsocketConnection {
     const localWebsocket = this.websocket
     const checkWebsocket = (): boolean => localWebsocket === this.websocket
 
-    this.websocket.onmessage = (event: MessageEvent) => {
+    this.websocket.addEventListener("message", (event: MessageEvent) => {
       if (checkWebsocket()) {
         this.handleMessage(event.data).catch(reason => {
           const err = `Failed to process a Websocket message (${reason})`
@@ -448,30 +449,30 @@ export class WebsocketConnection {
           this.stepFsm("FATAL_ERROR", err)
         })
       }
-    }
+    })
 
-    this.websocket.onopen = () => {
+    this.websocket.addEventListener("open", () => {
       if (checkWebsocket()) {
         logMessage(LOG, "WebSocket onopen")
         this.stepFsm("CONNECTION_SUCCEEDED")
       }
-    }
+    })
 
-    this.websocket.onclose = () => {
+    this.websocket.addEventListener("close", () => {
       if (checkWebsocket()) {
         logWarning(LOG, "WebSocket onclose")
         this.closeConnection()
         this.stepFsm("CONNECTION_CLOSED")
       }
-    }
+    })
 
-    this.websocket.onerror = () => {
+    this.websocket.addEventListener("error", () => {
       if (checkWebsocket()) {
         logError(LOG, "WebSocket onerror")
         this.closeConnection()
         this.stepFsm("CONNECTION_ERROR")
       }
-    }
+    })
   }
 
   private setConnectionTimeout(uri: string): void {
@@ -595,12 +596,15 @@ export class WebsocketConnection {
   }
 }
 
-export const StyledBashCode = styled.code({
+export const StyledBashCode = styled.code(({ theme }) => ({
+  fontFamily: theme.genericFonts.codeFont,
+  fontSize: theme.fontSizes.sm,
   "&::before": {
     content: '"$"',
+    // eslint-disable-next-line streamlit-custom/no-hardcoded-theme-values
     marginRight: "1ex",
   },
-})
+}))
 
 /**
  * Attempts to connect to the URIs in uriList (in round-robin fashion) and
@@ -657,9 +661,9 @@ export function doInitPings(
             Is Streamlit still running? If you accidentally stopped Streamlit,
             just restart it in your terminal:
           </p>
-          <pre>
+          <StyledPre>
             <StyledBashCode>streamlit run yourscript.py</StyledBashCode>
-          </pre>
+          </StyledPre>
         </Fragment>
       )
     } else {

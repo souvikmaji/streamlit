@@ -14,6 +14,7 @@
 
 import streamlit as st
 from streamlit import runtime
+from streamlit.errors import StreamlitAPIException
 
 v1 = st.text_area("text area 1 (default)")
 st.write("value 1:", v1)
@@ -65,3 +66,31 @@ st.write("value 10:", v10)
 
 v11 = st.text_area("text area 11 (height=250)", "default text", height=250)
 st.write("value 11:", v11)
+
+v12 = st.text_area("text area 12 (height=75)", "default text", height=75)
+st.write("value 12:", v12)
+
+# Error case: height < 68px
+try:
+    st.text_area("text area 13 (height=65)", "default text", height=65)
+except StreamlitAPIException as ex:
+    st.exception(ex)
+
+if "text_area_13" not in st.session_state:
+    st.session_state["text_area_13"] = "xyz"
+
+v13 = st.text_area(
+    "text area 13 (value from state)",
+    value=None,
+    key="text_area_13",
+)
+st.write("text area 13 (value from state) - value: ", v13)
+
+with st.form("form"):
+    st.text_area("text area 14 (value from form)", key="text_area_14")
+    st.form_submit_button("submit")
+
+form_value = (
+    st.session_state["text_area_14"] if "text_area_14" in st.session_state else None
+)
+st.write("text area 14 (value from form) - value: ", form_value)

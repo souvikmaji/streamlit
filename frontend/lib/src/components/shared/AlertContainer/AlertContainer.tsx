@@ -91,6 +91,10 @@ export default function AlertContainer({
             borderBottomRightRadius: theme.radii.default,
             borderTopLeftRadius: theme.radii.default,
             borderBottomLeftRadius: theme.radii.default,
+            paddingTop: theme.spacing.lg,
+            paddingBottom: theme.spacing.lg,
+            paddingRight: theme.spacing.lg,
+            paddingLeft: theme.spacing.lg,
           },
           props: {
             "data-testid": "stAlertContainer",
@@ -100,7 +104,7 @@ export default function AlertContainer({
         InnerContainer: {
           style: {
             width: "100%",
-            lineHeight: theme.lineHeights.alert,
+            lineHeight: theme.lineHeights.small,
           },
         },
       }}

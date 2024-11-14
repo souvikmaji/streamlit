@@ -19,6 +19,7 @@ from typing import TYPE_CHECKING, Literal
 
 from typing_extensions import TypeAlias
 
+from streamlit import config
 from streamlit.errors import StreamlitAPIException
 from streamlit.proto.ForwardMsg_pb2 import ForwardMsg
 from streamlit.proto.Navigation_pb2 import Navigation as NavigationProto
@@ -82,7 +83,7 @@ def navigation(
 
     Parameters
     ----------
-    pages: list[StreamlitPage] or dict[str, list[StreamlitPage]]
+    pages : list[StreamlitPage] or dict[str, list[StreamlitPage]]
         The available pages for the app.
 
         To create labeled sections or page groupings within the navigation
@@ -95,7 +96,7 @@ def navigation(
 
         Use ``st.Page`` to create ``StreamlitPage`` objects.
 
-    position: "sidebar" or "hidden"
+    position : "sidebar" or "hidden"
         The position of the navigation menu. If ``position`` is ``"sidebar"``
         (default), the navigation widget appears at the top of the sidebar. If
         ``position`` is ``"hidden"``, the navigation widget is not displayed.
@@ -103,11 +104,16 @@ def navigation(
         If there is only one page in ``pages``, the navigation will be hidden
         for any value of ``position``.
 
-    expanded: bool
-        Whether the navigation menu should be expanded. If ``True``,
-        the navigation menu will always be expanded. If ``False``, the
-        navigation menu will be collapsed and will include a button
-        to view more options.
+    expanded : bool
+        Whether the navigation menu should be expanded. If this is ``False``
+        (default), the navigation menu will be collapsed and will include a
+        button to view more options when there are too many pages to display.
+        If this is ``True``, the navigation menu will always be expanded; no
+        button to collapse the menu will be displayed.
+
+        If ``st.navigation`` changes from ``expanded=True`` to
+        ``expanded=False`` on a rerun, the menu will stay expanded and a
+        collapse button will be displayed.
 
     Returns
     -------
@@ -120,15 +126,47 @@ def navigation(
     you pass to ``streamlit run``. Your entrypoint file manages your app's
     navigation and serves as a router between pages.
 
+    **Example 1: Use a callable or Python file as a page**
+
     You can declare pages from callables or file paths.
 
+    ``page_1.py`` (in the same directory as your entrypoint file):
+
     >>> import streamlit as st
-    >>> from page_functions import page1
     >>>
-    >>> pg = st.navigation([st.Page(page1), st.Page("page2.py")])
+    >>> st.title("Page 1")
+
+    Your entrypoint file:
+
+    >>> import streamlit as st
+    >>>
+    >>> def page_2():
+    ...     st.title("Page 2")
+    >>>
+    >>> pg = st.navigation([st.Page("page_1.py"), st.Page(page_2)])
     >>> pg.run()
 
-    Use a dictionary to create sections within your navigation menu.
+    .. output::
+        https://doc-navigation-example-1.streamlit.app/
+        height: 200px
+
+    **Example 2: Group pages into sections**
+
+    You can use a dictionary to create sections within your navigation menu. In
+    the following example, each page is similar to Page 1 in Example 1, and all
+    pages are in the same directory. However, you can use Python files from
+    anywhere in your repository. For more information, see |st.Page|_.
+
+    Directory structure:
+
+    >>> your_repository/
+    >>> ├── create_account.py
+    >>> ├── learn.py
+    >>> ├── manage_account.py
+    >>> ├── streamlit_app.py
+    >>> └── trial.py
+
+    ``streamlit_app.py``:
 
     >>> import streamlit as st
     >>>
@@ -145,6 +183,12 @@ def navigation(
     >>>
     >>> pg = st.navigation(pages)
     >>> pg.run()
+
+    .. output::
+        https://doc-navigation-example-2.streamlit.app/
+        height: 300px
+
+    **Example 3: Stateful widgets across multiple pages**
 
     Call widget functions in your entrypoint file when you want a widget to be
     stateful across pages. Assign keys to your common widgets and access their
@@ -164,6 +208,13 @@ def navigation(
     >>>
     >>> pg = st.navigation([st.Page(page1), st.Page(page2)])
     >>> pg.run()
+
+    .. output::
+        https://doc-navigation-multipage-widgets.streamlit.app/
+        height: 350px
+
+    .. |st.Page| replace:: ``st.Page``
+    .. _st.Page: https://docs.streamlit.io/develop/api-reference/navigation/st.page
 
     """
     nav_sections = {"": pages} if isinstance(pages, list) else pages
@@ -219,6 +270,8 @@ def navigation(
 
     msg = ForwardMsg()
     if position == "hidden":
+        msg.navigation.position = NavigationProto.Position.HIDDEN
+    elif config.get_option("client.showSidebarNavigation") is False:
         msg.navigation.position = NavigationProto.Position.HIDDEN
     else:
         msg.navigation.position = NavigationProto.Position.SIDEBAR

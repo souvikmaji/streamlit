@@ -21,7 +21,7 @@ import { EmotionTheme } from "@streamlit/lib/src/theme"
 export const StyledTableContainer = styled.div(({ theme }) => ({
   fontSize: theme.fontSizes.md,
   fontFamily: theme.genericFonts.bodyFont,
-  lineHeight: theme.lineHeights.table,
+  lineHeight: theme.lineHeights.small,
   overflow: ["auto", "overlay"],
 }))
 
@@ -29,8 +29,19 @@ export const StyledTable = styled.table(({ theme }) => ({
   width: theme.sizes.full,
   marginBottom: theme.spacing.lg,
   color: theme.colors.bodyText,
+  // Prevent double borders
   borderCollapse: "collapse",
+  captionSide: "bottom",
   border: `${theme.sizes.borderWidth} solid ${theme.colors.borderColorLight}`,
+  "& caption": {
+    fontFamily: theme.genericFonts.bodyFont,
+    fontSize: theme.fontSizes.sm,
+    paddingTop: theme.spacing.sm,
+    paddingBottom: 0,
+    color: theme.colors.fadedText60,
+    textAlign: "left",
+    wordWrap: "break-word",
+  },
 }))
 
 const styleCellFunction = (theme: EmotionTheme): CSSObject => ({
@@ -46,15 +57,8 @@ export const StyledTableCell = styled.td(({ theme }) =>
 )
 export const StyledTableCellHeader = styled.th(({ theme }) => ({
   ...styleCellFunction(theme),
-
+  textAlign: "inherit",
   color: theme.colors.fadedText60,
-
-  "@media print": {
-    // Firefox prints a double blurred table header. Normal font weight fixes it
-    "@-moz-document url-prefix()": {
-      fontWeight: "normal",
-    },
-  },
 }))
 
 export const StyledEmptyTableCell = styled(StyledTableCell)(({ theme }) => ({

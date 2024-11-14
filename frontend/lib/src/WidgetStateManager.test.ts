@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { Mock } from "vitest"
 import { enableAllPlugins } from "immer"
 
 import {
@@ -71,15 +72,15 @@ const MOCK_FILE_UPLOADER_STATE = new FileUploaderStateProto({
 enableAllPlugins()
 
 describe("Widget State Manager", () => {
-  let sendBackMsg: jest.Mock
+  let sendBackMsg: Mock
   let widgetMgr: WidgetStateManager
   let formsData: FormsData
-  let onFormsDataChanged: jest.Mock
+  let onFormsDataChanged: Mock
 
   beforeEach(() => {
     formsData = createFormsData()
-    sendBackMsg = jest.fn()
-    onFormsDataChanged = jest.fn(newData => {
+    sendBackMsg = vi.fn()
+    onFormsDataChanged = vi.fn(newData => {
       formsData = newData
     })
     widgetMgr = new WidgetStateManager({
@@ -500,7 +501,7 @@ describe("Widget State Manager", () => {
     })
 
     it("updates formsWithUploads", () => {
-      widgetMgr.setFormsWithUploads(new Set(["three", "four"]))
+      widgetMgr.setFormsWithUploadsInProgress(new Set(["three", "four"]))
       expect(onFormsDataChanged).toHaveBeenCalledTimes(1)
       expect(formsData.formsWithUploads.has("one")).toBe(false)
       expect(formsData.formsWithUploads.has("two")).toBe(false)
@@ -516,7 +517,7 @@ describe("Widget State Manager", () => {
       // It's sufficient to check just a single FormsData member for this test;
       // Immer imposes this immutability guarantee on all of an object's
       // sets, maps, and arrays.
-      widgetMgr.setFormsWithUploads(new Set(["one", "two"]))
+      widgetMgr.setFormsWithUploadsInProgress(new Set(["one", "two"]))
       expect(Object.isFrozen(formsData.formsWithUploads)).toBe(true)
     })
   })
@@ -1111,8 +1112,8 @@ describe("WidgetStateDict", () => {
 
   it("supplies WidgetStates with for active widgets based on input", () => {
     const widgetStateManager = new WidgetStateManager({
-      sendRerunBackMsg: jest.fn(),
-      formsDataChanged: jest.fn(),
+      sendRerunBackMsg: vi.fn(),
+      formsDataChanged: vi.fn(),
     })
 
     widgetStateManager.setStringValue(

@@ -19,7 +19,7 @@ from __future__ import annotations
 from typing import Literal
 
 from streamlit import url_util
-from streamlit.elements.image import AtomicImage, WidthBehaviour, image_to_url
+from streamlit.elements.lib.image_utils import AtomicImage, WidthBehavior, image_to_url
 from streamlit.errors import StreamlitAPIException
 from streamlit.proto.ForwardMsg_pb2 import ForwardMsg
 from streamlit.runtime.metrics_util import gather_metrics
@@ -58,27 +58,35 @@ def logo(
         sidebar. If ``icon_image`` is also provided, then Streamlit will only
         display ``image`` in the sidebar.
 
-        Streamlit scales the image to a height of 24 pixels and a maximum
-        width of 240 pixels. Use images with an aspect ratio of 10:1 or less to
-        avoid distortion.
+        Streamlit scales the image to a max height set by ``size`` and a max
+        width to fit within the sidebar.
     size: "small", "medium", or "large"
         The size of the image displayed in the upper-left corner of the app and its
-        sidebar. The default is ``"medium"``.
+        sidebar. The possible values are as follows:
+
+        - ``"small"``: 20px max height
+        - ``"medium"`` (default): 24px max height
+        - ``"large"``: 32px max height
+
     link : str or None
         The external URL to open when a user clicks on the logo. The URL must
         start with "\\http://" or "\\https://". If ``link`` is ``None`` (default),
         the logo will not include a hyperlink.
     icon_image: Anything supported by st.image or None
-        An alternate image to replace ``image`` in the upper-left corner of the
-        app's main body. If ``icon_image`` is ``None`` (default), Streamlit
-        will render ``image`` in the upper-left corner of the app and its
-        sidebar. Otherwise, Streamlit will render ``icon_image`` in the
-        upper-left corner of the app and ``image`` in the upper-left corner
-        of the sidebar.
+        An optional, typically smaller image to replace ``image`` in the
+        upper-left corner when the sidebar is closed. If ``icon_image`` is
+        ``None`` (default), Streamlit will always display ``image`` in the
+        upper-left corner, regardless of whether the sidebar is open or closed.
+        Otherwise, Streamlit will render ``icon_image`` in the upper-left
+        corner of the app when the sidebar is closed.
 
-        Streamlit scales the image to a height of 24 pixels and a maximum
-        width of 240 pixels. Use images with an aspect ratio of 10:1 or less to
-        avoid distortion.
+        Streamlit scales the image to a max height set by ``size`` and a max
+        width to fit within the sidebar. If the sidebar is closed, the max
+        width is retained from when it was last open.
+
+        For best results, pass a wide or horizontal image to ``image`` and a
+        square image to ``icon_image``. Or, pass a square image to ``image``
+        and leave ``icon_image=None``.
 
     Examples
     --------
@@ -124,7 +132,7 @@ def logo(
     try:
         image_url = image_to_url(
             image,
-            width=WidthBehaviour.AUTO,
+            width=WidthBehavior.AUTO,
             clamp=False,
             channels="RGB",
             output_format="auto",
@@ -147,7 +155,7 @@ def logo(
         try:
             icon_image_url = image_to_url(
                 icon_image,
-                width=WidthBehaviour.AUTO,
+                width=WidthBehavior.AUTO,
                 clamp=False,
                 channels="RGB",
                 output_format="auto",

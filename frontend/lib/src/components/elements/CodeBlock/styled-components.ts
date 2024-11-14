@@ -14,7 +14,50 @@
  * limitations under the License.
  */
 
+import { CSSObject, Theme } from "@emotion/react"
 import styled from "@emotion/styled"
+
+const codeLink: CSSObject = {
+  // Streamline the style when inside anchors to avoid broken underline and more
+  "a > &": {
+    color: "inherit",
+  },
+}
+
+export const StyledInlineCode = styled.code(({ theme }) => ({
+  padding: "0.2em 0.4em",
+  wordWrap: "break-word",
+  margin: 0,
+  borderRadius: theme.radii.md,
+  background: theme.colors.codeHighlightColor,
+  color: theme.colors.codeTextColor,
+  fontFamily: theme.genericFonts.codeFont,
+  // Use em here so that it works correctly within captions
+  fontSize: "0.75em",
+
+  ...codeLink,
+}))
+
+const codeBlockStyle = (theme: Theme): CSSObject => ({
+  background: "transparent",
+  border: 0,
+  color: "inherit",
+  display: "inline",
+  fontFamily: theme.genericFonts.codeFont,
+  fontSize: theme.fontSizes.sm,
+  lineHeight: "inherit",
+  margin: 0,
+  overflowX: "auto",
+  padding: 0,
+  whiteSpace: "pre",
+  wordBreak: "normal",
+  wordWrap: "normal",
+  ...codeLink,
+})
+
+export const StyledCode = styled.code(({ theme }) => ({
+  ...codeBlockStyle(theme),
+}))
 
 /*
   This is the default prism.js theme for JavaScript, CSS and HTML, but
@@ -23,10 +66,26 @@ import styled from "@emotion/styled"
   See https://prismjs.com/download.html#themes=prism&languages=markup+css+clike+javascript
 */
 export const StyledPre = styled.pre(({ theme }) => ({
-  margin: 0,
-  paddingRight: "2.75rem",
-  color: theme.colors.bodyText,
+  background: theme.colors.codeHighlightColor,
   borderRadius: theme.radii.default,
+  color: theme.colors.bodyText,
+  fontSize: theme.fontSizes.twoSm,
+  fontFamily: theme.genericFonts.codeFont,
+  display: "block",
+  // Remove browser default top margin
+  margin: 0,
+  // Disable auto-hiding scrollbar in legacy Edge to avoid overlap,
+  // making it impossible to interact with the content
+  msOverflowStyle: "scrollbar",
+
+  // Don't allow content to break outside
+  overflow: "auto",
+  // Add padding
+  padding: theme.spacing.lg,
+  // Add padding to the right to account for the copy button
+  paddingRight: theme.iconSizes.threeXL,
+
+  code: { ...codeBlockStyle(theme) },
 
   // The token can consist of many lines, e.g. a triple-quote string, so
   // we need to make sure that the color is not overwritten.
@@ -46,11 +105,11 @@ export const StyledPre = styled.pre(({ theme }) => ({
   },
 
   ".token.comment, .token.prolog, .token.doctype, .token.cdata": {
-    color: "slategray",
+    color: theme.colors.gray70,
   },
 
   ".token.punctuation": {
-    color: "#999",
+    color: theme.colors.gray70,
   },
 
   ".namespace": {
@@ -91,12 +150,12 @@ export const StyledPre = styled.pre(({ theme }) => ({
 
   ".token.function, .token.class-name, .token.selector": {
     color: theme.colors.blue70,
-    fontWeight: "bold",
+    fontWeight: theme.fontWeights.extrabold,
   },
 
   ".token.important": {
     color: theme.colors.red70,
-    fontWeight: "bold",
+    fontWeight: theme.fontWeights.extrabold,
   },
 
   ".token.comment": {

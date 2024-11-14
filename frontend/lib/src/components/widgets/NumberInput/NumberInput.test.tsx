@@ -15,9 +15,8 @@
  */
 import React from "react"
 
-import "@testing-library/jest-dom"
 import { act, fireEvent, screen } from "@testing-library/react"
-import userEvent from "@testing-library/user-event"
+import { userEvent } from "@testing-library/user-event"
 
 import {
   LabelVisibilityMessage as LabelVisibilityMessageProto,
@@ -47,8 +46,8 @@ const getProps = (elementProps: Partial<NumberInputProto> = {}): Props => ({
   disabled: false,
   theme: mockTheme.emotion,
   widgetMgr: new WidgetStateManager({
-    sendRerunBackMsg: jest.fn(),
-    formsDataChanged: jest.fn(),
+    sendRerunBackMsg: vi.fn(),
+    formsDataChanged: vi.fn(),
   }),
 })
 
@@ -120,9 +119,7 @@ describe("NumberInput widget", () => {
     const props = getIntProps()
     render(<NumberInput {...props} />)
 
-    expect(screen.getByTestId("stWidgetLabel")).toHaveTextContent(
-      props.element.label
-    )
+    expect(screen.getByText(props.element.label)).toBeVisible()
   })
 
   it("pass labelVisibility prop to StyledWidgetLabel correctly when hidden", () => {
@@ -158,6 +155,24 @@ describe("NumberInput widget", () => {
     expect(numberInput).toHaveAttribute("max", "Infinity")
   })
 
+  it("sets input mode to empty string", () => {
+    const props = getIntProps()
+    render(<NumberInput {...props} />)
+
+    const numberInput = screen.getByTestId("stNumberInputField")
+
+    expect(numberInput).toHaveAttribute("inputmode", "")
+  })
+
+  it("sets input type to number", () => {
+    const props = getIntProps()
+    render(<NumberInput {...props} />)
+
+    const numberInput = screen.getByTestId("stNumberInputField")
+
+    expect(numberInput).toHaveAttribute("type", "number")
+  })
+
   it("sets min/max values", () => {
     const props = getIntProps({
       hasMin: true,
@@ -178,7 +193,7 @@ describe("NumberInput widget", () => {
     const props = getIntProps({ formId: "form", default: 10 })
     props.widgetMgr.setFormSubmitBehaviors("form", true)
 
-    jest.spyOn(props.widgetMgr, "setIntValue")
+    vi.spyOn(props.widgetMgr, "setIntValue")
     render(<NumberInput {...props} />)
 
     const numberInput = screen.getByTestId("stNumberInputField")
@@ -214,15 +229,13 @@ describe("NumberInput widget", () => {
     await user.click(numberInput)
     await user.keyboard("{backspace}5")
 
-    expect(screen.getByTestId("InputInstructions")).toHaveTextContent(
-      "Press Enter to apply"
-    )
+    expect(screen.getByText("Press Enter to apply")).toBeVisible()
   })
 
   it("shows Input Instructions if in form that allows submit on enter", async () => {
     const user = userEvent.setup()
     const props = getIntProps({ formId: "form" })
-    jest.spyOn(props.widgetMgr, "allowFormEnterToSubmit").mockReturnValue(true)
+    vi.spyOn(props.widgetMgr, "allowFormEnterToSubmit").mockReturnValue(true)
 
     render(<NumberInput {...props} />)
     const numberInput = screen.getByTestId("stNumberInputField")
@@ -231,17 +244,32 @@ describe("NumberInput widget", () => {
     await user.click(numberInput)
     await user.keyboard("{backspace}5")
 
-    expect(screen.getByTestId("InputInstructions")).toHaveTextContent(
-      "Press Enter to submit form"
-    )
+    expect(screen.getByText("Press Enter to submit form")).toBeVisible()
+  })
+
+  it("shows Input Instructions if focused again and in form that allows submit on enter", async () => {
+    const user = userEvent.setup()
+    const props = getIntProps({ formId: "form" })
+    vi.spyOn(props.widgetMgr, "allowFormEnterToSubmit").mockReturnValue(true)
+
+    render(<NumberInput {...props} />)
+    const numberInput = screen.getByTestId("stNumberInputField")
+
+    // userEvent necessary to trigger dirty state
+    await user.click(numberInput)
+    await user.keyboard("{backspace}5")
+
+    fireEvent.blur(numberInput)
+    expect(screen.queryByTestId("InputInstructions")).not.toBeInTheDocument()
+
+    fireEvent.focus(numberInput)
+    expect(screen.getByText("Press Enter to submit form")).toBeVisible()
   })
 
   it("hides Input Instructions if in form that doesn't allow submit on enter", async () => {
     const user = userEvent.setup()
     const props = getIntProps({ formId: "form" })
-    jest
-      .spyOn(props.widgetMgr, "allowFormEnterToSubmit")
-      .mockReturnValue(false)
+    vi.spyOn(props.widgetMgr, "allowFormEnterToSubmit").mockReturnValue(false)
 
     render(<NumberInput {...props} />)
     const numberInput = screen.getByTestId("stNumberInputField")
@@ -273,7 +301,7 @@ describe("NumberInput widget", () => {
 
     it("sets widget value on mount", () => {
       const props = getFloatProps()
-      jest.spyOn(props.widgetMgr, "setDoubleValue")
+      vi.spyOn(props.widgetMgr, "setDoubleValue")
 
       render(<NumberInput {...props} />)
 
@@ -289,7 +317,7 @@ describe("NumberInput widget", () => {
 
     it("sets value on Enter", () => {
       const props = getFloatProps({ default: 10 })
-      jest.spyOn(props.widgetMgr, "setDoubleValue")
+      vi.spyOn(props.widgetMgr, "setDoubleValue")
 
       render(<NumberInput {...props} />)
 
@@ -302,7 +330,7 @@ describe("NumberInput widget", () => {
 
     it("sets initialValue from widgetMgr", () => {
       const props = getFloatProps({ default: 10.0 })
-      props.widgetMgr.getDoubleValue = jest.fn(() => 15.0)
+      props.widgetMgr.getDoubleValue = vi.fn(() => 15.0)
       render(<NumberInput {...props} />)
 
       expect(screen.getByTestId("stNumberInputField")).toHaveValue(15.0)
@@ -387,7 +415,7 @@ describe("NumberInput widget", () => {
 
     it("sets widget value on mount", () => {
       const props = getIntProps()
-      jest.spyOn(props.widgetMgr, "setIntValue")
+      vi.spyOn(props.widgetMgr, "setIntValue")
 
       render(<NumberInput {...props} />)
 
@@ -413,14 +441,12 @@ describe("NumberInput widget", () => {
 
       // Check that the value is updated & state dirty
       expect(screen.getByTestId("stNumberInputField")).toHaveValue(15)
-      expect(screen.getByTestId("InputInstructions")).toHaveTextContent(
-        "Press Enter to apply"
-      )
+      expect(screen.getByText("Press Enter to apply")).toBeVisible()
     })
 
     it("sets value on Enter", () => {
       const props = getIntProps({ default: 10 })
-      jest.spyOn(props.widgetMgr, "setIntValue")
+      vi.spyOn(props.widgetMgr, "setIntValue")
 
       render(<NumberInput {...props} />)
 
@@ -436,7 +462,7 @@ describe("NumberInput widget", () => {
         ...getIntProps({ default: 10 }),
         fragmentId: "myFragmentId",
       }
-      jest.spyOn(props.widgetMgr, "setIntValue")
+      vi.spyOn(props.widgetMgr, "setIntValue")
 
       render(<NumberInput {...props} />)
 
@@ -454,7 +480,7 @@ describe("NumberInput widget", () => {
 
     it("sets initialValue from widgetMgr", () => {
       const props = getIntProps({ default: 10 })
-      props.widgetMgr.getIntValue = jest.fn(() => 15)
+      props.widgetMgr.getIntValue = vi.fn(() => 15)
 
       render(<NumberInput {...props} />)
 
@@ -623,9 +649,7 @@ describe("NumberInput widget", () => {
       await user.click(numberInput)
       await user.keyboard("20")
 
-      expect(screen.getByTestId("InputInstructions")).toHaveTextContent(
-        "Press Enter to apply"
-      )
+      expect(screen.getByText("Press Enter to apply")).toBeVisible()
     })
   })
 

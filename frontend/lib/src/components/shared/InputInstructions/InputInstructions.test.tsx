@@ -16,7 +16,6 @@
 
 import React from "react"
 
-import "@testing-library/jest-dom"
 import { screen } from "@testing-library/react"
 
 import { render } from "@streamlit/lib/src/test_util"
@@ -42,9 +41,7 @@ describe("InputInstructions", () => {
   it("should show Enter instructions by default", () => {
     render(<InputInstructions {...props} />)
 
-    expect(screen.getByTestId("InputInstructions").textContent).toBe(
-      "Press Enter to apply"
-    )
+    expect(screen.getByText("Press Enter to apply")).toBeVisible()
   })
 
   describe("Multiline type", () => {
@@ -54,9 +51,7 @@ describe("InputInstructions", () => {
 
     it("should show Ctrl+Enter instructions", () => {
       render(<InputInstructions {...props} />)
-      expect(screen.getByTestId("InputInstructions").textContent).toBe(
-        "Press Ctrl+Enter to apply"
-      )
+      expect(screen.getByText("Press Ctrl+Enter to apply")).toBeVisible()
     })
 
     it("show ⌘+Enter instructions", () => {
@@ -70,9 +65,7 @@ describe("InputInstructions", () => {
       })
       render(<InputInstructions {...props} />)
 
-      expect(screen.getByTestId("InputInstructions").textContent).toBe(
-        "Press ⌘+Enter to apply"
-      )
+      expect(screen.getByText("Press ⌘+Enter to apply")).toBeVisible()
     })
 
     it("should show instructions for max length", () => {
@@ -116,7 +109,7 @@ describe("InputInstructions", () => {
       })
       render(<InputInstructions {...props} />)
 
-      expect(screen.getByTestId("InputInstructions").textContent).toBe("3/3")
+      expect(screen.getByText("3/3")).toBeVisible()
     })
   })
 
@@ -128,9 +121,7 @@ describe("InputInstructions", () => {
       })
       render(<InputInstructions {...props} />)
 
-      expect(screen.getByTestId("InputInstructions").textContent).toBe(
-        "Press Enter to submit form"
-      )
+      expect(screen.getByText("Press Enter to submit form")).toBeVisible()
     })
 
     it("should show correct instructions to submit form with multiline input", () => {
@@ -140,9 +131,7 @@ describe("InputInstructions", () => {
       })
       render(<InputInstructions {...props} />)
 
-      expect(screen.getByTestId("InputInstructions").textContent).toBe(
-        "Press ⌘+Enter to submit form"
-      )
+      expect(screen.getByText("Press ⌘+Enter to submit form")).toBeVisible()
     })
 
     it("should not show enter instructions if allowEnterToSubmit is false", () => {

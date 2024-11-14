@@ -15,13 +15,13 @@
 from playwright.sync_api import Page, expect
 
 from e2e_playwright.conftest import ImageCompareFunction
-from e2e_playwright.shared.app_utils import check_top_level_class
+from e2e_playwright.shared.app_utils import check_top_level_class, get_element_by_key
 
 
 def test_st_json_displays_correctly(app: Page, assert_snapshot: ImageCompareFunction):
     """Test st.json renders the data correctly."""
     json_elements = app.get_by_test_id("stJson")
-    expect(json_elements).to_have_count(7)
+    expect(json_elements).to_have_count(8)
 
     assert_snapshot(json_elements.nth(0), name="st_json-simple_dict")
     assert_snapshot(json_elements.nth(1), name="st_json-collapsed")
@@ -30,6 +30,16 @@ def test_st_json_displays_correctly(app: Page, assert_snapshot: ImageCompareFunc
     assert_snapshot(json_elements.nth(4), name="st_json-simple_list")
     assert_snapshot(json_elements.nth(5), name="st_json-empty_dict")
     assert_snapshot(json_elements.nth(6), name="st_json-expanded_2")
+    # The container bounds test is screenshot tested in another test below
+
+
+def test_st_json_keeps_container_bounds(
+    app: Page, assert_snapshot: ImageCompareFunction
+):
+    """Test st.json keeps the container bounds."""
+    container_with_json = get_element_by_key(app, "container_with_json")
+    expect(container_with_json.get_by_test_id("stJson")).to_have_count(1)
+    assert_snapshot(container_with_json, name="st_json-keep_bounds")
 
 
 def test_st_json_displays_correctly_when_themed(
@@ -43,3 +53,12 @@ def test_st_json_displays_correctly_when_themed(
 def test_check_top_level_class(app: Page):
     """Check that the top level class is correctly set."""
     check_top_level_class(app, "stJson")
+
+
+def test_shows_copy_icon(themed_app: Page, assert_snapshot: ImageCompareFunction):
+    """Test that the copy icon is shown by hovering over the element."""
+    json_element = themed_app.get_by_test_id("stJson").first
+    expect(json_element).to_be_visible()
+    json_element.hover()
+
+    assert_snapshot(json_element, name="st_json-copy_icon_on_hover")

@@ -20,8 +20,8 @@ from typing import TYPE_CHECKING, Literal, cast
 
 from streamlit import runtime
 from streamlit.delta_generator_singletons import get_dg_singleton_instance
-from streamlit.elements.image import AtomicImage, WidthBehaviour, image_to_url
 from streamlit.elements.lib.form_utils import is_in_form
+from streamlit.elements.lib.image_utils import AtomicImage, WidthBehavior, image_to_url
 from streamlit.elements.lib.policies import check_widget_policies
 from streamlit.elements.lib.utils import (
     Key,
@@ -96,7 +96,7 @@ def _process_avatar_input(
         try:
             return AvatarType.IMAGE, image_to_url(
                 avatar,
-                width=WidthBehaviour.ORIGINAL,
+                width=WidthBehavior.ORIGINAL,
                 clamp=False,
                 channels="RGB",
                 output_format="auto",
@@ -258,7 +258,7 @@ class ChatMixin:
         key : str or int
             An optional string or integer to use as the unique key for the widget.
             If this is omitted, a key will be generated for the widget based on
-            its content. Multiple widgets of the same type may not share the same key.
+            its content. No two widgets may have the same key.
 
         max_chars : int or None
             The maximum number of characters that can be entered. If ``None``
@@ -370,14 +370,14 @@ class ChatMixin:
 
         serde = ChatInputSerde()
         widget_state = register_widget(
-            "chat_input",
-            chat_input_proto,
+            chat_input_proto.id,
             on_change_handler=on_submit,
             args=args,
             kwargs=kwargs,
             deserializer=serde.deserialize,
             serializer=serde.serialize,
             ctx=ctx,
+            value_type="string_trigger_value",
         )
 
         chat_input_proto.disabled = disabled

@@ -139,8 +139,9 @@ class TextWidgetsMixin:
         label : str
             A short label explaining to the user what this input is for.
             The label can optionally contain GitHub-flavored Markdown of the
-            following types: Bold, Italics, Strikethroughs, Inline Code, and
-            Links.
+            following types: Bold, Italics, Strikethroughs, Inline Code, Links,
+            and Images. Images display like icons, with a max height equal to
+            the font height.
 
             Unsupported Markdown elements are unwrapped so only their children
             (text contents) render. Display unsupported elements as literal
@@ -150,9 +151,9 @@ class TextWidgetsMixin:
             See the ``body`` parameter of |st.markdown|_ for additional,
             supported Markdown directives.
 
-            For accessibility reasons, you should never set an empty label (label="")
-            but hide it with label_visibility if needed. In the future, we may disallow
-            empty labels by raising an exception.
+            For accessibility reasons, you should never set an empty label, but
+            you can hide it with ``label_visibility`` if needed. In the future,
+            we may disallow empty labels by raising an exception.
 
             .. |st.markdown| replace:: ``st.markdown``
             .. _st.markdown: https://docs.streamlit.io/develop/api-reference/text/st.markdown
@@ -168,8 +169,7 @@ class TextWidgetsMixin:
         key : str or int
             An optional string or integer to use as the unique key for the widget.
             If this is omitted, a key will be generated for the widget
-            based on its content. Multiple widgets of the same type may
-            not share the same key.
+            based on its content. No two widgets may have the same key.
 
         type : "default" or "password"
             The type of the text input. This can be either "default" (for
@@ -177,7 +177,9 @@ class TextWidgetsMixin:
             masks the user's typed value). Defaults to "default".
 
         help : str
-            An optional tooltip that gets displayed next to the input.
+            An optional tooltip that gets displayed next to the widget label.
+            Streamlit only displays the tooltip when
+            ``label_visibility="visible"``.
 
         autocomplete : str
             An optional value that will be passed to the <input> element's
@@ -199,14 +201,14 @@ class TextWidgetsMixin:
             no text is displayed.
 
         disabled : bool
-            An optional boolean, which disables the text input if set to True.
-            The default is False.
+            An optional boolean that disables the text input if set to
+            ``True``. The default is ``False``.
 
         label_visibility : "visible", "hidden", or "collapsed"
-            The visibility of the label. If "hidden", the label doesn't show but there
-            is still empty space for it above the widget (equivalent to label="").
-            If "collapsed", both the label and the space are removed. Default is
-            "visible".
+            The visibility of the label. The default is ``"visible"``. If this
+            is ``"hidden"``, Streamlit displays an empty spacer instead of the
+            label, which can help keep the widget alligned with other widgets.
+            If this is ``"collapsed"``, Streamlit displays no label or spacer.
 
         Returns
         -------
@@ -331,14 +333,14 @@ class TextWidgetsMixin:
         serde = TextInputSerde(value)
 
         widget_state = register_widget(
-            "text_input",
-            text_input_proto,
+            text_input_proto.id,
             on_change_handler=on_change,
             args=args,
             kwargs=kwargs,
             deserializer=serde.deserialize,
             serializer=serde.serialize,
             ctx=ctx,
+            value_type="string_value",
         )
 
         if widget_state.value_changed:
@@ -411,8 +413,9 @@ class TextWidgetsMixin:
         label : str
             A short label explaining to the user what this input is for.
             The label can optionally contain GitHub-flavored Markdown of the
-            following types: Bold, Italics, Strikethroughs, Inline Code, and
-            Links.
+            following types: Bold, Italics, Strikethroughs, Inline Code, Links,
+            and Images. Images display like icons, with a max height equal to
+            the font height.
 
             Unsupported Markdown elements are unwrapped so only their children
             (text contents) render. Display unsupported elements as literal
@@ -422,13 +425,12 @@ class TextWidgetsMixin:
             See the ``body`` parameter of |st.markdown|_ for additional,
             supported Markdown directives.
 
-            For accessibility reasons, you should never set an empty label (label="")
-            but hide it with label_visibility if needed. In the future, we may disallow
-            empty labels by raising an exception.
+            For accessibility reasons, you should never set an empty label, but
+            you can hide it with ``label_visibility`` if needed. In the future,
+            we may disallow empty labels by raising an exception.
 
             .. |st.markdown| replace:: ``st.markdown``
             .. _st.markdown: https://docs.streamlit.io/develop/api-reference/text/st.markdown
-
 
         value : object or None
             The text value of this widget when it first renders. This will be
@@ -436,8 +438,9 @@ class TextWidgetsMixin:
             return ``None`` until the user provides input. Defaults to empty string.
 
         height : int or None
-            Desired height of the UI element expressed in pixels. If None, a
-            default height is used.
+            Desired height of the UI element expressed in pixels. If this is
+            ``None`` (default), the widget's initial height fits three lines.
+            The height must be at least 68 pixels, which fits two lines.
 
         max_chars : int or None
             Maximum number of characters allowed in text area.
@@ -445,11 +448,12 @@ class TextWidgetsMixin:
         key : str or int
             An optional string or integer to use as the unique key for the widget.
             If this is omitted, a key will be generated for the widget
-            based on its content. Multiple widgets of the same type may
-            not share the same key.
+            based on its content. No two widgets may have the same key.
 
         help : str
-            An optional tooltip that gets displayed next to the textarea.
+            An optional tooltip that gets displayed next to the widget label.
+            Streamlit only displays the tooltip when
+            ``label_visibility="visible"``.
 
         on_change : callable
             An optional callback invoked when this text_area's value changes.
@@ -465,14 +469,14 @@ class TextWidgetsMixin:
             no text is displayed.
 
         disabled : bool
-            An optional boolean, which disables the text area if set to True.
-            The default is False.
+            An optional boolean that disables the text area if set to ``True``.
+            The default is ``False``.
 
         label_visibility : "visible", "hidden", or "collapsed"
-            The visibility of the label. If "hidden", the label doesn't show but there
-            is still empty space for it above the widget (equivalent to label="").
-            If "collapsed", both the label and the space are removed. Default is
-            "visible".
+            The visibility of the label. The default is ``"visible"``. If this
+            is ``"hidden"``, Streamlit displays an empty spacer instead of the
+            label, which can help keep the widget alligned with other widgets.
+            If this is ``"collapsed"``, Streamlit displays no label or spacer.
         Returns
         -------
         str or None
@@ -499,6 +503,12 @@ class TextWidgetsMixin:
            height: 300px
 
         """
+        # Specified height must be at least 68 pixels (3 lines of text).
+        if height is not None and height < 68:
+            raise StreamlitAPIException(
+                f"Invalid height {height}px for `st.text_area` - must be at least 68 pixels."
+            )
+
         ctx = get_script_run_ctx()
         return self._text_area(
             label=label,
@@ -586,14 +596,14 @@ class TextWidgetsMixin:
 
         serde = TextAreaSerde(value)
         widget_state = register_widget(
-            "text_area",
-            text_area_proto,
+            text_area_proto.id,
             on_change_handler=on_change,
             args=args,
             kwargs=kwargs,
             deserializer=serde.deserialize,
             serializer=serde.serialize,
             ctx=ctx,
+            value_type="string_value",
         )
 
         if widget_state.value_changed:

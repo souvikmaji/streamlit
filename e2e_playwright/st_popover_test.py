@@ -139,13 +139,10 @@ def test_fullscreen_mode_is_disabled_in_popover(app: Page):
     # Get the fullscreen elements popover container:
     popover_element = app.get_by_test_id("stPopover").nth(4)
     # Click the button to open it:
-    popover_element.get_by_test_id("stBaseButton-secondary").first.click()
+    popover_element.get_by_test_id("stPopoverButton").first.click()
 
     popover_container = app.get_by_test_id("stPopoverBody")
     expect(popover_container).to_be_visible()
-
-    # check that the image does not have the fullscreen button
-    expect(popover_container.get_by_test_id("StyledFullScreenButton")).to_have_count(0)
 
     # Check dataframe toolbar:
     dataframe_element = popover_container.get_by_test_id("stDataFrame").nth(0)
@@ -160,10 +157,7 @@ def test_fullscreen_mode_is_disabled_in_popover(app: Page):
 def test_show_tooltip_on_hover(app: Page):
     """Test that the tooltip is shown when hovering over a popover button."""
     popover_button = (
-        app.get_by_test_id("stPopover")
-        .nth(4)
-        .get_by_test_id("stBaseButton-secondary")
-        .first
+        app.get_by_test_id("stPopover").nth(4).get_by_test_id("stPopoverButton").first
     )
     # Click the button to open it:
     popover_button.hover()

@@ -30,7 +30,7 @@ import { ChatInput as ChatInputProto } from "@streamlit/lib/src/proto"
 import { WidgetStateManager } from "@streamlit/lib/src/WidgetStateManager"
 import Icon from "@streamlit/lib/src/components/shared/Icon"
 import InputInstructions from "@streamlit/lib/src/components/shared/InputInstructions/InputInstructions"
-import { hasLightBackgroundColor } from "@streamlit/lib/src/theme"
+import { isEnterKeyPressed } from "@streamlit/lib/src/util/inputUtils"
 
 import {
   StyledChatInput,
@@ -54,20 +54,6 @@ const MAX_VISIBLE_NUM_LINES = 6.5
 // Rounding errors can arbitrarily create scrollbars. We add a rounding offset
 // to manage it better.
 const ROUNDING_OFFSET = 1
-
-const isEnterKeyPressed = (
-  event: KeyboardEvent<HTMLTextAreaElement>
-): boolean => {
-  // Using keyCode as well due to some different behaviors on Windows
-  // https://bugs.chromium.org/p/chromium/issues/detail?id=79407
-
-  const { keyCode, key } = event
-  return (
-    (key === "Enter" || keyCode === 13 || keyCode === 10) &&
-    // Do not send the sentence being composed when Enter is typed into the IME.
-    !(event.nativeEvent?.isComposing === true)
-  )
-}
 
 function ChatInput({
   width,
@@ -166,11 +152,7 @@ function ChatInput({
   }, [chatInputRef])
 
   const { disabled, placeholder, maxChars } = element
-  const lightTheme = hasLightBackgroundColor(theme)
   const { minHeight, maxHeight } = heightGuidance.current
-  const placeholderColor = lightTheme
-    ? theme.colors.gray70
-    : theme.colors.gray80
 
   const isInputExtended =
     scrollHeight > 0 && chatInputRef.current
@@ -219,18 +201,22 @@ function ChatInput({
               style: {
                 lineHeight: theme.lineHeights.inputWidget,
                 backgroundColor: theme.colors.transparent,
+                // Disable resizing via drag and drop
+                resize: "none",
                 "::placeholder": {
-                  color: placeholderColor,
+                  opacity: "0.7",
                 },
                 height: isInputExtended
                   ? `${scrollHeight + ROUNDING_OFFSET}px`
                   : "auto",
                 maxHeight: maxHeight ? `${maxHeight}px` : "none",
                 // Baseweb requires long-hand props, short-hand leads to weird bugs & warnings.
-                paddingRight: "3rem",
                 paddingLeft: theme.spacing.sm,
                 paddingBottom: theme.spacing.sm,
                 paddingTop: theme.spacing.sm,
+                // Calculate the right padding to account for the send icon (iconSizes.xl + 2 * spacing.sm)
+                // and some additional margin between the icon and the text (spacing.sm).
+                paddingRight: `calc(${theme.iconSizes.xl} + 2 * ${theme.spacing.sm} + ${theme.spacing.sm})`,
               },
             },
           }}

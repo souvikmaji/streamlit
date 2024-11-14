@@ -62,6 +62,9 @@ ACCEPTABLE_LICENSES = {
     "(WTFPL OR MIT)",
     "(AFL-2.1 OR BSD-3-Clause)",
     "(BSD-2-Clause OR MIT OR Apache-2.0)",
+    "Apache*",
+    "(MIT OR GPL-3.0-or-later)",
+    "Apache-2.0 AND MIT",
 }
 
 # Some of our dependencies have licenses that yarn fails to parse, but that
