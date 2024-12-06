@@ -217,6 +217,7 @@ clean:
 	rm -f lib/Pipfile.lock
 	rm -rf frontend/app/build
 	rm -rf frontend/node_modules
+	rm -rf frontend/app/performance/lighthouse/reports
 	rm -rf frontend/app/node_modules
 	rm -rf frontend/lib/node_modules
 	rm -rf frontend/test_results
@@ -226,7 +227,7 @@ clean:
 	rm -rf frontend/lib/dist
 	rm -rf ~/.cache/pre-commit
 	rm -rf e2e_playwright/test-results
-	find . -name .streamlit -type d -exec rm -rfv {} \; || true
+	find . -name .streamlit -not -path './e2e_playwright/.streamlit' -type d -exec rm -rfv {} \; || true
 	cd lib; rm -rf .coverage .coverage\.*
 
 MIN_PROTOC_VERSION = 3.20
@@ -388,7 +389,6 @@ notices:
 	./scripts/append_license.sh frontend/app/src/assets/img/Open-Iconic.LICENSE
 	./scripts/append_license.sh frontend/lib/src/vendor/bokeh/bokeh-LICENSE.txt
 	./scripts/append_license.sh frontend/lib/src/vendor/twemoji-LICENSE.txt
-	./scripts/append_license.sh frontend/app/src/vendor/Segment-LICENSE.txt
 	./scripts/append_license.sh frontend/lib/src/vendor/react-bootstrap-LICENSE.txt
 	./scripts/append_license.sh lib/streamlit/vendor/ipython/IPython-LICENSE.txt
 
@@ -413,6 +413,12 @@ pre-commit-install:
 # Ensure relative imports exist within the lib/dist folder when doing yarn buildLibProd.
 ensure-relative-imports:
 	./scripts/ensure_relative_imports.sh
+
+.PHONY: performance-lighthouse
+# Run Lighthouse performance tests
+performance-lighthouse:
+	cd frontend/app; \
+	yarn run lighthouse:run
 
 .PHONY frontend-lib-prod:
 # Build the production version for @streamlit/lib.

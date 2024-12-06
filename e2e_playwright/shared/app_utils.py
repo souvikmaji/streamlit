@@ -48,6 +48,28 @@ def get_checkbox(locator: Locator | Page, label: str | Pattern[str]) -> Locator:
     return element
 
 
+def get_radio_button(locator: Locator | Page, label: str | Pattern[str]) -> Locator:
+    """Get a radio button widget with the given label.
+
+    Parameters
+    ----------
+
+    locator : Locator
+        The locator to search for the 'radio' element.
+
+    label : str or Pattern[str]
+        The label of the radio element to get.
+
+    Returns
+    -------
+    Locator
+        The element.
+    """
+    element = locator.locator('[data-baseweb="radio"]').filter(has_text=label)
+    expect(element).to_be_visible()
+    return element
+
+
 def get_image(locator: Locator | Page, caption: str | Pattern[str]) -> Locator:
     """Get an image element with the given caption.
 
@@ -634,6 +656,6 @@ def wait_for_all_images_to_be_loaded(page: Page) -> None:
     # Wait to make sure that the images have been loaded
     page.wait_for_function("""() => {
         const images = Array.from(document.querySelectorAll('img'));
-        return images.every(img => img.complete);
+        return images.every(img => img.complete && img.naturalHeight !== 0);
     }
     """)

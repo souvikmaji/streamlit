@@ -31,10 +31,8 @@ import "moment-timezone"
 import numbro from "numbro"
 import { sprintf } from "sprintf-js"
 
-import {
-  Type as ArrowType,
-  Quiver,
-} from "@streamlit/lib/src/dataframes/Quiver"
+import { formatPeriodType } from "@streamlit/lib/src/dataframes/arrowFormatUtils"
+import { Type as ArrowType } from "@streamlit/lib/src/dataframes/arrowTypeUtils"
 import { EmotionTheme } from "@streamlit/lib/src/theme"
 import {
   isNullOrUndefined,
@@ -62,6 +60,8 @@ export interface BaseColumnProps {
   readonly isHidden: boolean
   // If `True`, the column is a table index:
   readonly isIndex: boolean
+  // If `True`, the column is pinned/frozen:
+  readonly isPinned: boolean
   // If `True`, the column is a stretched:
   readonly isStretched: boolean
   // If `True`, a value is required before the cell or row can be submitted:
@@ -468,7 +468,7 @@ export function formatNumber(
   } else if (format === "duration[ns]") {
     return moment.duration(value / (1000 * 1000), "milliseconds").humanize()
   } else if (format.startsWith("period[")) {
-    return Quiver.formatPeriodType(BigInt(value), format as any)
+    return formatPeriodType(BigInt(value), format as any)
   }
 
   return sprintf(format, value)
@@ -672,7 +672,8 @@ export function getLinkDisplayValueFromRegex(
     if (patternMatch && patternMatch[1] !== undefined) {
       // return the first matching group
       // Since this might be a URI encoded value, we decode it.
-      return decodeURI(patternMatch[1])
+      // Note: we replace + with %20 to correctly convert + to whitespaces.
+      return decodeURIComponent(patternMatch[1].replace(/\+/g, "%20"))
     }
 
     // if the regex doesn't find a match with the url, just use the url as display value
